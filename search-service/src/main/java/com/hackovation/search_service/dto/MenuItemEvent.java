@@ -1,6 +1,5 @@
 package com.hackovation.search_service.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,33 +12,15 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MenuItemEvent {
-    @JsonProperty("id")
-    private Long id;
-    
-    @JsonProperty("restaurantId")
+    private String menuItemId;
     private String restaurantId;
-    
-    @JsonProperty("name")
-    private String name;
-    
-    @JsonProperty("description")
+    private String restaurantName;
+    private String menuItemName;
     private String description;
-    
-    @JsonProperty("price")
-    private Double price;
-    
-    @JsonProperty("category")
     private String category;
-    
-    @JsonProperty("imageUrl")
+    private Double price;
+    private Boolean isAvailable;
     private String imageUrl;
-    
-    @JsonProperty("isAvailable")
-    private boolean isAvailable;
-    
-    @JsonProperty("tags")
     private Set<String> tags;
-    
-    @JsonProperty("eventType")
-    private String eventType; // "CREATED", "UPDATED", "DELETED"
+    private String eventType;
 }

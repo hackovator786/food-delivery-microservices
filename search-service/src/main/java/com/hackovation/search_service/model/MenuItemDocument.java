@@ -17,7 +17,8 @@ import org.springframework.data.elasticsearch.annotations.*;
 public class MenuItemDocument {
 
     @Id
-    private Long id;
+    @Field(type = FieldType.Keyword)
+    private String menuItemId;
 
     @Field(type = FieldType.Keyword)
     private String  restaurantId;
@@ -31,7 +32,7 @@ public class MenuItemDocument {
                     @InnerField(suffix = "keyword", type = FieldType.Keyword)
             }
     )
-    private String name;
+    private String menuItemName;
 
     @MultiField(
             mainField = @Field(type = FieldType.Text, analyzer = "standard", fielddata = true),
@@ -74,7 +75,7 @@ public class MenuItemDocument {
                         @InnerField(suffix = "keyword", type = FieldType.Keyword)
                 }
         )
-        private String name;
+        private String tagName;
     }
 }
 

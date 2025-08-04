@@ -4,12 +4,10 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -29,12 +27,15 @@ public class MenuItem extends BaseModel {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @NotBlank
+    private String menuItemId;
+
     @NotBlank(message = "Restaurant ID is required")
     private String restaurantId;
 
     @NotBlank(message = "Name is required")
     @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
-    private String name;
+    private String menuItemName;
 
     @NotBlank(message = "Description is required")
     @Size(min = 2, max = 1000, message = "Description must be between 2 and 1000 characters")
@@ -59,10 +60,24 @@ public class MenuItem extends BaseModel {
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private Set<Tag> tags = new HashSet<>();
 
+    // Only include the 'id' in equals() and hashCode() to prevent the loop
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MenuItem menuItem = (MenuItem) o;
+        return Objects.equals(id, menuItem.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
     @PrePersist
     public void prePersist() {
         super.prePersist();
-        this.isAvailable = true;
+        this.isAvailable = true; // Set isAvailable to true by default
     }
 
     @PreUpdate

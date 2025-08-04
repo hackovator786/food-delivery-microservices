@@ -25,9 +25,9 @@ public class MenuItemIndexService {
             .collect(Collectors.toSet());
 
         MenuItemDocument doc = new MenuItemDocument();
-        doc.setId(menuItemRequest.getMenuItemId());
+        doc.setMenuItemId(menuItemRequest.getMenuItemId());
         doc.setRestaurantId(menuItemRequest.getRestaurantId());
-        doc.setName(menuItemRequest.getName());
+        doc.setMenuItemName(menuItemRequest.getName());
         doc.setDescription(menuItemRequest.getDescription());
         doc.setPrice(menuItemRequest.getPrice());
         doc.setIsAvailable(menuItemRequest.getIsAvailable());

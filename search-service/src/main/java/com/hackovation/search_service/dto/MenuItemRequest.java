@@ -15,7 +15,7 @@ import java.util.Set;
 public class MenuItemRequest {
 
     @NotNull
-    private Long menuItemId;
+    private String menuItemId;
 
     @NotBlank
     private String restaurantId;

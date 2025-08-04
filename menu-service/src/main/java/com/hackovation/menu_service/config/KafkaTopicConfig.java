@@ -17,4 +17,14 @@ public class KafkaTopicConfig {
     public NewTopic menuItemCreatedTopic() {
         return new NewTopic("menu-item-created", 1, (short) 1);
     }
+
+    @Bean
+    public NewTopic menuItemUpdatedTopic() {
+        return new NewTopic("menu-item-updated", 1, (short) 1);
+    }
+
+    @Bean
+    public NewTopic menuItemDeletedTopic() {
+        return new NewTopic("menu-item-deleted", 1, (short) 1);
+    }
 }

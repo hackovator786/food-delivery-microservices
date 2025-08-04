@@ -29,7 +29,7 @@ public class MenuItemEventPublisher {
     
     public void publishMenuItemDeleted(String menuItemId) {
         MenuItemEvent event = MenuItemEvent.builder()
-                .id(menuItemId)
+                .menuItemId(menuItemId)
                 .eventType("DELETED")
                 .build();
         publishEvent("menu-item-deleted", event);

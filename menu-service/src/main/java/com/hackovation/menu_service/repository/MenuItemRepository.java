@@ -8,5 +8,4 @@ import java.util.List;
 
 public interface MenuItemRepository extends JpaRepository<MenuItem, Long> {
     List<MenuItem> findByRestaurantId(String restaurantId);
-    Boolean existsByRestaurantIdAndNameAndCategory(String name, String restaurantId, MenuCategory category);
 }

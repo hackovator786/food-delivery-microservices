@@ -9,10 +9,10 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableFeignClients(basePackageClasses = {UserInterface.class})
-public class AuthsysApplication {
+public class AuthServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(AuthsysApplication.class, args);
+		SpringApplication.run(AuthServiceApplication.class, args);
 	}
 
 }

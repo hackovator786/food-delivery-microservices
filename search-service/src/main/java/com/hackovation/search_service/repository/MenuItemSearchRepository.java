@@ -6,6 +6,6 @@ import java.util.List;
 
 public interface MenuItemSearchRepository
         extends ElasticsearchRepository<MenuItemDocument, String> {
-    // Optional helper queries:
+
     List<MenuItemDocument> findByRestaurantId(String restaurantId);
 }

@@ -1,10 +1,12 @@
 package com.hackovation.search_service.kafka;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hackovation.search_service.dto.MenuItemEvent;
 import com.hackovation.search_service.model.MenuItemDocument;
 import com.hackovation.search_service.repository.MenuItemSearchRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -17,15 +19,18 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MenuItemEventListener {
 
-    private final MenuItemSearchRepository menuItemSearchRepository;
+    @Autowired
+    private MenuItemSearchRepository menuItemSearchRepository;
 
     @KafkaListener(
         topics = {"menu-item-created", "menu-item-updated"}, 
         groupId = "${spring.kafka.group-id}",
         containerFactory = "kafkaListenerContainerFactory"
     )
-    public void handleMenuItemCreatedOrUpdated(MenuItemEvent event) {
+    public void handleMenuItemCreatedOrUpdated(String eventStr) {
+        MenuItemEvent event = null;
         try {
+            event = new ObjectMapper().readValue(eventStr, MenuItemEvent.class);
             log.info("Received menu item event: {}", event);
             
             // Convert tags to document format
@@ -34,15 +39,16 @@ public class MenuItemEventListener {
                 .collect(Collectors.toSet());
 
             // Create or update document
-            MenuItemDocument doc = menuItemSearchRepository.findById(event.getId())
+            MenuItemDocument doc = menuItemSearchRepository.findById(event.getMenuItemId())
                 .orElse(new MenuItemDocument());
             
-            doc.setId(event.getId());
+            doc.setMenuItemId(event.getMenuItemId());
             doc.setRestaurantId(event.getRestaurantId());
-            doc.setName(event.getName());
+            doc.setRestaurantName(event.getRestaurantName());
+            doc.setMenuItemName(event.getMenuItemName());
             doc.setDescription(event.getDescription());
             doc.setPrice(event.getPrice());
-            doc.setIsAvailable(event.isAvailable());
+            doc.setIsAvailable(event.getIsAvailable());
             doc.setTags(tagDocs);
             doc.setImageUrl(event.getImageUrl());
             doc.setUpdatedAt(Instant.now());
@@ -53,7 +59,7 @@ public class MenuItemEventListener {
 
             // Save to Elasticsearch
             menuItemSearchRepository.save(doc);
-            log.info("Successfully processed menu item {}: {}", event.getEventType(), event.getId());
+            log.info("Successfully processed menu item {}: {}", event.getEventType(), event.getMenuItemId());
             
         } catch (Exception e) {
             log.error("Error processing menu item event: {}", event, e);
@@ -65,13 +71,15 @@ public class MenuItemEventListener {
         groupId = "${spring.kafka.group-id}",
         containerFactory = "kafkaListenerContainerFactory"
     )
-    public void handleMenuItemDeleted(MenuItemEvent event) {
+    public void handleMenuItemDeleted(String eventStr) {
+        MenuItemEvent event = null;
         try {
-            log.info("Received menu item deletion event: {}", event.getId());
-            menuItemSearchRepository.deleteById(event.getId());
-            log.info("Successfully deleted menu item from index: {}", event.getId());
+            event = new ObjectMapper().readValue(eventStr, MenuItemEvent.class);
+            log.info("Received menu item deletion event: {}", event.getMenuItemId());
+            menuItemSearchRepository.deleteById(event.getMenuItemId());
+            log.info("Successfully deleted menu item from index: {}", event.getMenuItemId());
         } catch (Exception e) {
-            log.error("Error deleting menu item from index: {}", event.getId(), e);
+            log.error("Error deleting menu item from index: {}", event.getMenuItemId(), e);
         }
     }
 }
