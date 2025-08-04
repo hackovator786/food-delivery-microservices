@@ -1,0 +1,104 @@
+#Spring Cloud Gateway Configuration
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: otp-service
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/auth/signup/send-otp, /auth/signup/resend-otp, /auth/login/send-otp, /auth/login/resend-otp
+          filters:
+            - name: RedisRateLimiter
+              args:
+                routeId: otp-service
+                maxRequests: 1
+                durationInSeconds: 60
+            - RewritePath=/(?<segment>auth/.*), /api/v1.0/${segment}
+
+        - id: verify-service
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/auth/signup/verify-otp, /auth/login/verify-otp
+          filters:
+            - name: RedisRateLimiter
+              args:
+                routeId: verify-service
+                maxRequests: 3
+                durationInSeconds: 60
+            - RewritePath=/(?<segment>auth/.*), /api/v1.0/${segment}
+
+#        - id: auth-user-service
+#          uri: lb://AUTH-SERVICE
+#          predicates:
+#            - Path=/user/**
+#          filters:
+#            - name: RedisRateLimiter
+#              args:
+#                routeId: auth-user-service
+#                maxRequests: 5
+#                durationInSeconds: 60
+#            - name: AuthFilter
+#              args:
+#                role: ROLE_CUSTOMER
+#            - RewritePath=/(?<segment>user/.*), /api/v1.0/${segment}
+
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/user/**
+          filters:
+            - name: RedisRateLimiter
+              args:
+                routeId: auth-user-service
+                maxRequests: 5
+                durationInSeconds: 60
+            - name: AuthFilter
+              args:
+                roles:
+                  - ROLE_CUSTOMER
+                  - ROLE_ADMIN
+                  - ROLE_RESTAURANT_OWNER
+                  - ROLE_DELIVERY_AGENT
+            - RewritePath=/(?<segment>user/.*), /api/v1.0/${segment}
+
+        - id: restaurant-service
+          uri: lb://RESTAURANT-SERVICE
+          predicates:
+            - Path=/restaurant/**
+          filters:
+            - name: RedisRateLimiter
+              args:
+                routeId: restaurant-service
+                maxRequests: 5
+                durationInSeconds: 60
+            - name: AuthFilter
+              args:
+                roles:
+                  - ROLE_RESTAURANT_OWNER
+            - RewritePath=/(?<segment>restaurant/.*), /api/v1.0/${segment}
+
+        - id: menu-service
+          uri: lb://MENU-SERVICE
+          predicates:
+            - Path=/menu/**
+          filters:
+            - name: RedisRateLimiter
+              args:
+                routeId: menu-service
+                maxRequests: 5
+                durationInSeconds: 60
+            - name: AuthFilter
+              args:
+                roles:
+                  - ROLE_RESTAURANT_OWNER
+            - RewritePath=/(?<segment>menu/.*), /api/v1.0/${segment}
+
+#Eureka Client Configuration
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    hostname: localhost

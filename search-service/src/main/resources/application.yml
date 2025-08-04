@@ -1,0 +1,16 @@
+spring:
+  elasticsearch:
+    uris: "${ELASTIC_HOST:https://localhost:9200}"
+    username: elastic
+    password: "${ELASTIC_PASSWORD}"
+    restclient:
+      ssl:
+        bundle: es-ssl
+
+ssl:
+  bundle:
+    jks:
+      es-ssl:
+        truststore:
+          location: "file:${TRUSTSTORE_LOCATION}"
+          password: "${TRUSTSTORE_PASSWORD}"
