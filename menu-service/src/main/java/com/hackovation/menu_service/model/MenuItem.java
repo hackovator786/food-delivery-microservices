@@ -12,6 +12,7 @@ import java.util.Set;
 
 
 @Data
+@ToString(exclude = {"category", "tags"})
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

@@ -12,6 +12,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 public class MenuItemResponse {
+    private String menuItemId;
     private String restaurantId;
     private String name;
     private String description;

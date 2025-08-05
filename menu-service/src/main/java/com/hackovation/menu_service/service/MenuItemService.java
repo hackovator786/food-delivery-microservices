@@ -57,27 +57,17 @@ public class MenuItemService {
 
 
     @Transactional(rollbackFor = {Exception.class})
-    public MenuItemResponse addMenuItem(String userId, String restaurantId, MenuItemRequest menuItemRequest, MultipartFile file) throws  Exception{
+    public MenuItemResponse addMenuItem(String userId, String restaurantId, MenuItemRequest menuItemRequest, MultipartFile file) throws Exception {
         try {
             // Validate MenuItemRequest
 
-            ResponseEntity<?> response = restaurantInterface.getRestaurantName(restaurantId, userId);
-
-            System.out.println("Response from user service: " + response);
-            System.out.println("Response body from user service: " + response.getBody());
-            System.out.println("Response status code from user service: " + response.getStatusCode());
-            String restaurantName = null;
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() instanceof Map<?, ?> map) {
-                Map<String, Object> responseBody = (Map<String, Object>) map;
-                restaurantName = (String) responseBody.get("name");
-                System.out.println("Restaurant Name: " + restaurantName);
-            } else if (response.getBody() instanceof Map<?, ?> map) {
-                ErrorResponse error = objectMapper.convertValue(map, ErrorResponse.class);
-                System.out.println("Error: " + error.getMessage());
-            } else {
-                System.out.println("Unexpected response format");
+            // Get Restaurant name
+            String restaurantName = getRestaurantName(restaurantId, userId);
+            if (restaurantName == null) {
+                throw new ApiException("Restaurant does not exist");
             }
 
+            // Check valid category
             MenuCategory menuCategory = menuCategoryRepository.findByRestaurantIdAndName(restaurantId, menuItemRequest.getCategory());
             if (menuCategory == null) {
                 throw new ApiException("Category does not exist");
@@ -85,7 +75,6 @@ public class MenuItemService {
 
             // Upload image to S3
             String imageUrl = uploadImageToS3(file);
-
 
             // Create MenuItem object
             MenuItem menuItem = new MenuItem();
@@ -112,33 +101,10 @@ public class MenuItemService {
             MenuItem savedMenuItem = menuItemRepository.save(menuItem);
 
             // Publish MenuItemCreated event to Kafka
-            menuItemEventPublisher.publishMenuItemCreated(
-                    MenuItemEvent.builder()
-                            .menuItemId(savedMenuItem.getMenuItemId())
-                            .restaurantId(savedMenuItem.getRestaurantId())
-                            .restaurantName(restaurantName)
-                            .menuItemName(savedMenuItem.getMenuItemName())
-                            .description(savedMenuItem.getDescription())
-                            .category(savedMenuItem.getCategory().getName())
-                            .price(savedMenuItem.getPrice())
-                            .isAvailable(savedMenuItem.getIsAvailable())
-                            .imageUrl(savedMenuItem.getImageUrl())
-                            .tags(savedMenuItem.getTags().stream().map(Tag::getName).collect(Collectors.toSet()))
-                            .eventType("CREATE")
-                            .build()
-                    );
+            publishMenuItemEvent(savedMenuItem, restaurantName, "CREATE");
 
-            return MenuItemResponse.builder()
-                    .restaurantId(savedMenuItem.getRestaurantId())
-                    .name(savedMenuItem.getMenuItemName())
-                    .description(savedMenuItem.getDescription())
-                    .price(savedMenuItem.getPrice())
-                    .category(savedMenuItem.getCategory().getName())
-                    .imageUrl(savedMenuItem.getImageUrl())
-                    .isAvailable(savedMenuItem.getIsAvailable())
-                    .tags(savedMenuItem.getTags().stream().map(Tag::getName).collect(Collectors.toSet()))
-                    .build();
-        }catch (FeignException feignException) {
+            return convertToMenuItemResponse(savedMenuItem);
+        } catch (FeignException feignException) {
             System.out.println("Error from restaurant service: " + feignException.getMessage());
             throw new ApiException("Error from restaurant service: " + feignException.getMessage());
         } catch (FeignExceptionWrapper ex) {
@@ -169,13 +135,124 @@ public class MenuItemService {
                 .build();
     }
 
-    public List<MenuItemResponse> getAllFoodItems(String restaurantId) {
+    public List<MenuItemResponse> getAllMenuItems(String restaurantId) {
         return null;
     }
 
-    public String updateFoodItem(MenuItemResponse foodItemDto, String username) {
+    @Transactional(rollbackFor = {Exception.class})
+    public MenuItemResponse updateMenuItem(String menuItemId, MenuItemRequest menuItemRequest, MultipartFile file, String restaurantId, String userId) throws ApiException {
+        try {
+            // Get the restaurant name, validating the user's access to the restaurant
+            String restaurantName = getRestaurantName(restaurantId, userId);
+            if (restaurantName == null) {
+                throw new ApiException("Restaurant does not exist");
+            }
 
-        return "Food Item not present";
+            // Fetch the existing MenuItem
+            MenuItem menuItem = menuItemRepository.findByMenuItemId(menuItemId)
+                    .orElseThrow(() -> new ApiException("MenuItem not found"));
+
+            // Check if the MenuItem belongs to the given restaurant
+            if (!menuItem.getRestaurantId().equals(restaurantId)) {
+                throw new ApiException("MenuItem does not belong to the given restaurant");
+            }
+
+            // Check if the category exists
+            MenuCategory menuCategory = menuCategoryRepository.findByRestaurantIdAndName(restaurantId, menuItemRequest.getCategory());
+            if (menuCategory == null) {
+                throw new ApiException("Category does not exist");
+            }
+
+            // Upload the image to S3 if a new file is provided
+            String imageUrl = menuItem.getImageUrl(); // Existing image URL
+            if (file != null && !file.isEmpty()) {
+                imageUrl = uploadImageToS3(file);
+            }
+
+            // Update the MenuItem properties
+            menuItem.setMenuItemName(menuItemRequest.getName());
+            menuItem.setDescription(menuItemRequest.getDescription());
+            menuItem.setCategory(menuCategory);
+            menuItem.setPrice(menuItemRequest.getPrice());
+            menuItem.setImageUrl(imageUrl);
+
+            // Update tags
+            Set<Tag> persistentTags = menuItemRequest.getTags().stream()
+                    .map(name -> tagRepository.findByName(name).orElseGet(() -> {
+                        Tag tag = new Tag();
+                        tag.setName(name);
+                        return tag;
+                    }))
+                    .collect(Collectors.toSet());
+
+            menuItem.getTags().clear();
+            menuItem.getTags().addAll(persistentTags);
+            persistentTags.forEach(tag -> tag.getMenuItems().add(menuItem));
+
+            // Save the updated MenuItem
+            MenuItem updatedMenuItem = menuItemRepository.save(menuItem);
+
+            // Publish the MenuItemUpdated event to Kafka
+            publishMenuItemEvent(updatedMenuItem, restaurantName, "UPDATE");
+
+            // Convert and return the response
+            return convertToMenuItemResponse(updatedMenuItem);
+
+        } catch (FeignException feignException) {
+            throw new ApiException("Error from restaurant service: " + feignException.getMessage());
+        } catch (FeignExceptionWrapper ex) {
+            ErrResponse error = ex.getErrorResponse();
+            throw new ApiException("Error from restaurant service: " + error.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ApiException("Error updating menu item: " + e.getMessage());
+        }
+    }
+
+    @Transactional(rollbackFor = {Exception.class})
+    public String deleteMenuItem(String menuItemId, String restaurantId, String userId) throws Exception {
+        // Validate restaurantId and userId
+        String restaurantName = getRestaurantName(restaurantId, userId);
+
+        if(restaurantName == null){
+            throw new ApiException("Invalid Restaurant Name");
+        }
+
+        MenuItem menuItem = menuItemRepository.findByMenuItemId(menuItemId).orElseThrow(() -> new ApiException("MenuItem not found"));
+
+        // Disassociate from Category
+        if (menuItem.getCategory() != null) {
+            menuItem.getCategory().getMenuItems().remove(menuItem);
+        }
+
+        // Disassociate from Tags
+        for (Tag tag : menuItem.getTags()) {
+            tag.getMenuItems().remove(menuItem);
+        }
+        menuItem.getTags().clear();
+
+        // Finally, delete
+        menuItemRepository.delete(menuItem);
+
+        publishMenuItemEvent(menuItem, restaurantName, "DELETE");
+        return "MenuItem deleted successfully";
+    }
+
+    private String getRestaurantName(String restaurantId, String userId) {
+
+        ResponseEntity<?> response = restaurantInterface.getRestaurantName(restaurantId, userId);
+        String restaurantName = null;
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() instanceof Map<?, ?> map) {
+            Map<String, Object> responseBody = (Map<String, Object>) map;
+            restaurantName = (String) responseBody.get("name");
+            System.out.println("Restaurant Name: " + restaurantName);
+        } else if (response.getBody() instanceof Map<?, ?> map) {
+            ErrorResponse error = objectMapper.convertValue(map, ErrorResponse.class);
+            System.out.println("Error: " + error.getMessage());
+        } else {
+            System.out.println("Unexpected response format");
+        }
+        return restaurantName;
     }
 
     private String uploadImageToS3(MultipartFile file) throws Exception {
@@ -199,9 +276,55 @@ public class MenuItemService {
         }
     }
 
-    private void update(MenuItem item, MenuItemResponse foodItemDto) {
-
+    private void publishMenuItemEvent(MenuItem menuItem, String restaurantName, String eventType) throws Exception {
+        if(eventType == null){
+            throw new Exception("Invalid event type");
+        }
+        if(eventType.equals("CREATE") && menuItem.getMenuItemId() != null){
+            System.out.println("Publishing CREATE event for MenuItem: " + menuItem.getMenuItemId());
+            menuItemEventPublisher.publishMenuItemCreated(
+                    convertToMenuItemEvent(menuItem, restaurantName, eventType)
+            );
+        } else if(eventType.equals("UPDATE") && menuItem.getMenuItemId() != null){
+            System.out.println("Publishing UPDATE event for MenuItem: " + menuItem.getMenuItemId());
+            menuItemEventPublisher.publishMenuItemUpdated(
+                    convertToMenuItemEvent(menuItem, restaurantName, eventType)
+            );
+        } else if(eventType.equals("DELETE") && menuItem.getMenuItemId() != null){
+            System.out.println("Publishing DELETE event for MenuItem: " + menuItem.getMenuItemId());
+            menuItemEventPublisher.publishMenuItemDeleted(menuItem.getMenuItemId());
+        } else {
+            throw new Exception("Invalid event publish request");
+        }
     }
 
+    private MenuItemEvent convertToMenuItemEvent(MenuItem menuItem, String restaurantName, String eventType) throws Exception{
+        return MenuItemEvent.builder()
+                .menuItemId(menuItem.getMenuItemId())
+                .restaurantId(menuItem.getRestaurantId())
+                .restaurantName(restaurantName)
+                .menuItemName(menuItem.getMenuItemName())
+                .description(menuItem.getDescription())
+                .category(menuItem.getCategory().getName())
+                .price(menuItem.getPrice())
+                .isAvailable(menuItem.getIsAvailable())
+                .imageUrl(menuItem.getImageUrl())
+                .tags(menuItem.getTags().stream().map(Tag::getName).collect(Collectors.toSet()))
+                .eventType(eventType)
+                .build();
+    }
 
+    private MenuItemResponse convertToMenuItemResponse(MenuItem menuItem) {
+        return MenuItemResponse.builder()
+                .menuItemId(menuItem.getMenuItemId())
+                .restaurantId(menuItem.getRestaurantId())
+                .name(menuItem.getMenuItemName())
+                .description(menuItem.getDescription())
+                .price(menuItem.getPrice())
+                .category(menuItem.getCategory().getName())
+                .imageUrl(menuItem.getImageUrl())
+                .isAvailable(menuItem.getIsAvailable())
+                .tags(menuItem.getTags().stream().map(Tag::getName).collect(Collectors.toSet()))
+                .build();
+    }
 }

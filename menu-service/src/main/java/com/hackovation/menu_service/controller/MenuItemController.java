@@ -48,13 +48,43 @@ public class MenuItemController {
 
     @GetMapping("/{restaurantId}")
     public List<MenuItemResponse> getAllFoodItems(@PathVariable("restaurantId") String restaurantId) {
-        return menuItemService.getAllFoodItems(restaurantId);
+//        return menuItemService.getAllFoodItems(restaurantId);
+        return null;
     }
 
-    @PutMapping
-    public String updateFoodItem(@RequestBody MenuItemResponse menuItemDto,
-                                 @RequestHeader("loggedInUser") String username) {
-        return menuItemService.updateFoodItem(menuItemDto, username);
+    @PutMapping("/update-menu-item/{restaurantId}/{menuItemId}")
+    public ResponseEntity<?> updateMenuItem(
+            @PathVariable("menuItemId") String menuItemId,
+            @RequestPart(value = "menuItem", required = false) String menuItemString,
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @PathVariable("restaurantId") String restaurantId,
+            @RequestHeader("loggedInUser") String userId) throws Exception {
+        if (menuItemString == null) {
+            throw new ApiException("Menu item data is required");
+        }
+        
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            MenuItemRequest menuItemRequest = objectMapper.readValue(menuItemString, MenuItemRequest.class);
+            MenuItemResponse updatedItem = menuItemService.updateMenuItem(menuItemId, menuItemRequest, file, restaurantId, userId);
+            return ResponseEntity.ok(updatedItem);
+        } catch (JsonProcessingException e) {
+            throw new ApiException("Invalid JSON format");
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ApiException("Error updating menu item: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/delete-menu-item/{restaurantId}/{menuItemId}")
+    public ResponseEntity<?> deleteMenuItem(
+            @PathVariable("menuItemId") String menuItemId,
+            @PathVariable("restaurantId") String restaurantId,
+            @RequestHeader("loggedInUser") String userId) throws Exception {
+        
+        String response = menuItemService.deleteMenuItem(menuItemId, restaurantId, userId);
+        System.out.println("Response: " + response);
+        return ResponseEntity.noContent().build();
     }
 
 }

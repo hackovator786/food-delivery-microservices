@@ -20,7 +20,7 @@ public class MenuItemEventPublisher {
     private final ObjectMapper objectMapper;
     
     public void publishMenuItemCreated(MenuItemEvent event) {
-        publishEvent("menu-item-created", event);
+            publishEvent("menu-item-created", event);
     }
     
     public void publishMenuItemUpdated(MenuItemEvent event) {
@@ -30,7 +30,7 @@ public class MenuItemEventPublisher {
     public void publishMenuItemDeleted(String menuItemId) {
         MenuItemEvent event = MenuItemEvent.builder()
                 .menuItemId(menuItemId)
-                .eventType("DELETED")
+                .eventType("DELETE")
                 .build();
         publishEvent("menu-item-deleted", event);
     }
