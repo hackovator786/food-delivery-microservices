@@ -1,4 +1,4 @@
-package com.hackovation.cart_service;
+package com.hackovation.cartservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

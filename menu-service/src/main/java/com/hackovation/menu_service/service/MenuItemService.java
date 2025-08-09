@@ -138,7 +138,7 @@ public class MenuItemService {
     }
 
     public List<MenuItemResponse> getAllMenuItems(String restaurantId) {
-        return null;
+        return menuItemRepository.findByRestaurantId(restaurantId).stream().map(this::convertToMenuItemResponse).collect(Collectors.toList());
     }
 
     @Transactional(rollbackFor = {Exception.class})

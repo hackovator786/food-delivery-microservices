@@ -50,8 +50,7 @@ public class MenuItemController {
 
     @GetMapping("/{restaurantId}")
     public List<MenuItemResponse> getAllFoodItems(@PathVariable("restaurantId") String restaurantId) {
-//        return menuItemService.getAllFoodItems(restaurantId);
-        return null;
+        return menuItemService.getAllMenuItems(restaurantId);
     }
 
     @PutMapping("/update-menu-item/{restaurantId}/{menuItemId}")
