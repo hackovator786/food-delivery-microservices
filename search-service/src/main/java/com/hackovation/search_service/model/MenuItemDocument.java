@@ -2,6 +2,8 @@ package com.hackovation.search_service.model;
 import java.time.Instant;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +16,7 @@ import org.springframework.data.elasticsearch.annotations.*;
 @AllArgsConstructor
 @Builder
 @Document(indexName = "menu-items", createIndex = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MenuItemDocument {
 
     @Id
@@ -57,9 +60,11 @@ public class MenuItemDocument {
     @Field(type = FieldType.Keyword)
     private String imageUrl;
 
+    @JsonIgnore
     @Field(type = FieldType.Date)
     private Instant createdAt;
 
+    @JsonIgnore
     @Field(type = FieldType.Date)
     private Instant updatedAt;
 

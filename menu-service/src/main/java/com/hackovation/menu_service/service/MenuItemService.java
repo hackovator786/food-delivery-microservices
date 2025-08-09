@@ -88,14 +88,14 @@ public class MenuItemService {
 
             Set<Tag> persistentTags = menuItemRequest.getTags().stream()
                     .map(name -> tagRepository.findByName(name).orElseGet(() -> {
-                        Tag t = new Tag();
-                        t.setName(name);
-                        return t;
+                        Tag tag = new Tag();
+                        tag.setName(name);
+                        return tagRepository.save(tag);
                     }))
                     .collect(Collectors.toSet());
 
-            menuItem.getTags().addAll(persistentTags);
-            persistentTags.forEach(t -> t.getMenuItems().add(menuItem));
+            menuItem.setTags(persistentTags);
+            persistentTags.forEach(tag -> tag.getMenuItems().add(menuItem));
 
             // Save MenuItem
             MenuItem savedMenuItem = menuItemRepository.save(menuItem);
@@ -111,6 +111,8 @@ public class MenuItemService {
             ErrResponse error = ex.getErrorResponse();
             System.out.println("Error from restaurant service: " + error.getMessage());
             throw new ApiException("Error from restaurant service: " + error.getMessage());
+        } catch (ApiException e) {
+            throw e;
         } catch (Exception e) {
             e.printStackTrace();
             throw new Exception("Error from menu service: " + e.getMessage());
@@ -181,7 +183,7 @@ public class MenuItemService {
                     .map(name -> tagRepository.findByName(name).orElseGet(() -> {
                         Tag tag = new Tag();
                         tag.setName(name);
-                        return tag;
+                        return tagRepository.save(tag);
                     }))
                     .collect(Collectors.toSet());
 

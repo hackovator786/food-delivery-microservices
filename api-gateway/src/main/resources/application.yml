@@ -93,6 +93,18 @@ spring:
                   - ROLE_RESTAURANT_OWNER
             - RewritePath=/(?<segment>menu/.*), /api/v1.0/${segment}
 
+        - id: search-service
+          uri: lb://SEARCH-SERVICE
+          predicates:
+            - Path=/search/**
+          filters:
+            - name: RedisRateLimiter
+              args:
+                routeId: search-service
+                maxRequests: 5
+                durationInSeconds: 60
+            - RewritePath=/(?<segment>search/.*), /api/v1.0/${segment}
+
 #Eureka Client Configuration
 eureka:
   client:

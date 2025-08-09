@@ -31,6 +31,12 @@
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-elasticsearch</artifactId>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/co.elastic.clients/elasticsearch-java -->
+		<dependency>
+			<groupId>co.elastic.clients</groupId>
+			<artifactId>elasticsearch-java</artifactId>
+			<version>9.1.0</version>
+		</dependency>
 		<!-- spring data elasticsearch -->
 <!--		<dependency>-->
 <!--			<groupId>org.springframework.data</groupId>-->

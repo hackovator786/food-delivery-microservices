@@ -30,7 +30,9 @@ public class MenuItemController {
                               @PathVariable("restaurantId") String restaurantId, @RequestHeader("loggedInUser") String userId) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
+            System.out.println("MenuItemString: " + menuItemString);
             MenuItemRequest menuItemRequest = objectMapper.readValue(menuItemString, MenuItemRequest.class);
+            System.out.println("MenuItemRequest: " + menuItemRequest);
             return ResponseEntity.status(HttpStatus.CREATED).body(menuItemService.addMenuItem(userId, restaurantId, menuItemRequest, file));
         } catch (JsonProcessingException e) {
             throw new ApiException("Invalid JSON format");

@@ -27,6 +27,6 @@ public class MenuItemRequest {
     @NotNull(message = "Price is required")
     private Double price;
 
-    @NotNull(message = "Image URL is required")
+    @NotNull(message = "Tags are required")
     private Set<String> tags;
 }

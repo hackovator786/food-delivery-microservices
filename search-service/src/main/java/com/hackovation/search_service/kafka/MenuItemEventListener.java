@@ -47,6 +47,7 @@ public class MenuItemEventListener {
             doc.setRestaurantName(event.getRestaurantName());
             doc.setMenuItemName(event.getMenuItemName());
             doc.setDescription(event.getDescription());
+            doc.setCategory(event.getCategory());
             doc.setPrice(event.getPrice());
             doc.setIsAvailable(event.getIsAvailable());
             doc.setTags(tagDocs);
