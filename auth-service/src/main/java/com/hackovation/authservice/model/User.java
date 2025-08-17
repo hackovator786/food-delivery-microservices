@@ -49,6 +49,8 @@ public class User extends BaseModel {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
+    private String refreshToken;
+
 
     public User(String userId, String name, String email, UserRole role) {
         this.userId = userId;

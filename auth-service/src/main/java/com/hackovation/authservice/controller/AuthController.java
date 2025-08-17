@@ -7,41 +7,25 @@ import com.hackovation.authservice.dto.request.SignUpRequest;
 import com.hackovation.authservice.dto.response.AuthTokenResponse;
 import com.hackovation.authservice.dto.response.MessageResponse;
 import com.hackovation.authservice.enums.RequestType;
-import com.hackovation.authservice.exception.AuthException;
-import com.hackovation.authservice.security.OtpAuthenticationToken;
-import com.hackovation.authservice.service.CustomUserDetails;
-import com.hackovation.authservice.service.OtpService;
 import com.hackovation.authservice.service.UserService;
-import com.hackovation.authservice.util.SecureJwtUtils;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.security.authentication.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.http.HttpResponse;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
     @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private SecureJwtUtils jwtUtils;
-
-    @Autowired
     private UserService userService;
-
-    @Autowired
-    private KafkaTemplate<String, String> kafkaTemplate;
-
-    @Autowired
-    private OtpService otpService;
 
     @PostMapping("/login/send-otp")
     public ResponseEntity<?> requestLoginOtp(@Valid @RequestBody OtpRequest otpRequest) throws Exception {
@@ -50,43 +34,27 @@ public class AuthController {
     }
 
     @PostMapping("/login/verify-otp")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) throws Exception {
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) throws Exception {
         try {
-            Authentication authRequest = new OtpAuthenticationToken(loginRequest.getEmail(), loginRequest.getOtp());
-            Authentication authentication = authenticationManager.authenticate(authRequest);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            Map<String, String> authenticateUserResponse = userService.authenticateUser(loginRequest);
+            String accessToken = authenticateUserResponse.get("accessToken");
+            String refreshToken = authenticateUserResponse.get("refreshToken");
 
-            userService.resetFailedAttempts(loginRequest.getEmail());
+            // Create HttpOnly cookie for refresh token which is valid for 30 days
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/auth")
+                    .maxAge(30 * 24 * 60 * 60)
+                    .sameSite("Strict")
+                    .build();
 
-            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-            String authToken = jwtUtils.generateTokenFromUserId(userDetails);
-
-            AuthTokenResponse response = new AuthTokenResponse(authToken);
-
-            otpService.deleteOtp(RequestType.LOGIN.name().toUpperCase(), loginRequest.getEmail());
-
-            return ResponseEntity.ok(response);
-        } catch (BadCredentialsException ex){
-            try {
-                userService.updateFailedAttempts(loginRequest.getEmail());
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-            }
-            throw new AuthException(ex.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (DisabledException ex){
-            throw new AuthException("Invalid credentials or the user is disabled", HttpStatus.UNAUTHORIZED);
-        } catch (LockedException ex) {
-            throw new AuthException("Invalid credentials or the account is locked", HttpStatus.UNAUTHORIZED);
-        } catch (CredentialsExpiredException ex) {
-            throw new AuthException("Your password has expired. Please reset it.", HttpStatus.UNAUTHORIZED);
-        } catch (AccountExpiredException ex) {
-            throw new AuthException("Your account has expired. Contact support.", HttpStatus.UNAUTHORIZED);
-        } catch (AuthenticationException ex) {
-            throw new AuthException("Authentication failed", HttpStatus.UNAUTHORIZED);
-        } catch (Exception ex){
-            System.out.println(ex.getMessage());
-            throw new Exception("Unknown error has occurred");
+            // Send access token in JSON body
+            return ResponseEntity.ok(Map.of("accessToken", accessToken));
+        } catch (Exception e) {
+            throw new Exception("Error during user authentication process");
         }
     }
 
@@ -103,14 +71,59 @@ public class AuthController {
     }
 
     @PostMapping("/signup/verify-otp")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody SignUpRequest signUpRequest) throws Exception {
-        return ResponseEntity.ok(userService.createUserAndGenerateAuthToken(signUpRequest));
+    public ResponseEntity<?> registerUser(@Valid @RequestBody SignUpRequest signUpRequest, HttpServletResponse response) throws Exception {
+        try {
+            Map<String, String> createUserAndGenerateAuthTokenResponse = userService.createUserAndGenerateAuthToken(signUpRequest);
+            String accessToken = createUserAndGenerateAuthTokenResponse.get("accessToken");
+            String refreshToken = createUserAndGenerateAuthTokenResponse.get("refreshToken");
+
+            // Create HttpOnly cookie for refresh token which is valid for 30 days
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/auth")
+                    .maxAge(30 * 24 * 60 * 60)
+                    .sameSite("Strict")
+                    .build();
+
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+            // Send access token in JSON body
+            return ResponseEntity.ok(Map.of("accessToken", accessToken));
+        } catch (Exception e) {
+            throw new Exception("Error during user registration process");
+        }
     }
 
     @PostMapping("/signup/resend-otp")
     public ResponseEntity<?> resendOtp(@Valid @RequestBody OtpRequest otpRequest) throws Exception {
         userService.generateOtpAndSend(RequestType.SIGNUP, otpRequest.getEmail());
         return ResponseEntity.ok(new MessageResponse("OTP resent successfully!"));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@CookieValue(value = "refreshToken", required = false) String refreshToken) throws Exception {
+        System.out.println("Refresh token: " + refreshToken);
+        String newAccessToken = userService.getNewAccessToken(refreshToken);
+        return ResponseEntity.ok(Map.of(
+                "accessToken", newAccessToken
+        ));
+    }
+
+    @PutMapping("/logout")
+    public ResponseEntity<?> logout(@CookieValue(value = "refreshToken", required = false) String refreshToken, HttpServletResponse response) throws Exception {
+        System.out.println("Inside logout\nRefresh token: " + refreshToken);
+        userService.clearRefreshToken(refreshToken);
+        // Clear the cookie on the client-side
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/auth")
+                .maxAge(0)
+                .sameSite("Strict")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return ResponseEntity.ok(new MessageResponse("Successfully logged out"));
     }
 
 }

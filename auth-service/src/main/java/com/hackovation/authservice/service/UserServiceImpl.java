@@ -4,26 +4,34 @@ package com.hackovation.authservice.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hackovation.authservice.dto.data.EmailVerificationData;
+import com.hackovation.authservice.dto.request.LoginRequest;
 import com.hackovation.authservice.dto.request.SignUpRequest;
 import com.hackovation.authservice.dto.request.UserRequest;
-import com.hackovation.authservice.dto.response.AuthTokenResponse;
 import com.hackovation.authservice.dto.response.ErrResponse;
 import com.hackovation.authservice.dto.response.ErrorResponse;
 import com.hackovation.authservice.dto.response.UserResponse;
 import com.hackovation.authservice.enums.RequestType;
 import com.hackovation.authservice.enums.UserRole;
+import com.hackovation.authservice.exception.ApiException;
+import com.hackovation.authservice.exception.AuthException;
 import com.hackovation.authservice.exception.RegException;
 import com.hackovation.authservice.feign.FeignExceptionWrapper;
 import com.hackovation.authservice.feign.UserInterface;
 import com.hackovation.authservice.model.User;
 import com.hackovation.authservice.repository.UserRepository;
-import com.hackovation.authservice.util.SecureJwtUtils;
+import com.hackovation.authservice.security.OtpAuthenticationToken;
+import com.hackovation.authservice.util.RefreshTokenUtils;
+import com.hackovation.authservice.util.AccessTokenUtils;
 import feign.FeignException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,9 +44,12 @@ import java.util.UUID;
 
 @Service
 public class UserServiceImpl implements UserService {
-    
+
     @Autowired
-    UserRepository userRepository;
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private OtpService otpService;
@@ -47,7 +58,10 @@ public class UserServiceImpl implements UserService {
     private KafkaTemplate<String, String> kafkaTemplate;
 
     @Autowired
-    private SecureJwtUtils jwtUtils;
+    private AccessTokenUtils accessTokenUtils;
+
+    @Autowired
+    private RefreshTokenUtils refreshTokenUtils;
 
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
@@ -81,7 +95,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(rollbackFor = {Exception.class})
-    public AuthTokenResponse createUserAndGenerateAuthToken(SignUpRequest signUpRequest) throws Exception {
+    public Map<String, String> createUserAndGenerateAuthToken(SignUpRequest signUpRequest) throws Exception {
         try {
             if (userRepository.existsByEmail(signUpRequest.getEmail())) {
                 throw new RegException("Email is already in use!\nPlease login using your email or enter a different email");
@@ -124,18 +138,9 @@ public class UserServiceImpl implements UserService {
                             .phoneNumber(null)
                             .userRole(role)
                             .build());
-            System.out.println("Response from user service: " + response);
-            System.out.println("Response body from user service: " + response.getBody());
-            System.out.println("Response status code from user service: " + response.getStatusCode());
-
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() instanceof Map<?, ?> map) {
                 UserResponse userResponse = objectMapper.convertValue(map, UserResponse.class);
-                System.out.println("Inside if block: User ID: " + userResponse.getUserId());
-                System.out.println("Inside if block: User Name: " + userResponse.getName());
-                System.out.println("Inside if block: User Email: " + userResponse.getEmail());
-                System.out.println("Inside if block: User Phone Number: " + userResponse.getPhoneNumber());
-                System.out.println("Inside if block: User Role: " + userResponse.getUserRole());
             } else if (response.getBody() instanceof Map<?, ?> map) {
                 ErrorResponse error = objectMapper.convertValue(map, ErrorResponse.class);
                 System.out.println("Error: " + error.getMessage());
@@ -143,14 +148,29 @@ public class UserServiceImpl implements UserService {
                 System.out.println("Unexpected response format");
             }
 
-            // Generate Auth Token
             CustomUserDetails customUserDetails = customUserDetailsService.loadUserByUsername(userId);
-            String token = jwtUtils.generateTokenFromUserId(customUserDetails);
+
+            // Generate an access token
+            String accessToken = accessTokenUtils.generateAccessTokenFromUserId(customUserDetails);
+
+            // Generate refresh token
+            String refreshToken = UUID.randomUUID().toString();
+            String refreshTokenHash = refreshTokenUtils.hashRefreshToken(refreshToken);
+            String refreshTokenPayload = refreshTokenUtils.generateRefreshToken(customUserDetails, refreshToken);
+
+            // Store refresh token hash in a database
+            User savedUser = userRepository.findByUserId(customUserDetails.getUserId()).orElseThrow(()-> new UsernameNotFoundException("User not found"));
+            savedUser.setRefreshToken(refreshTokenHash);
+            userRepository.save(savedUser);
+
+            if(accessToken == null || refreshToken == null) {
+                throw new Exception("Error occurred while creating user");
+            }
 
             // Delete OTP in Redis
             otpService.deleteOtp(RequestType.SIGNUP.name().toUpperCase(), signUpRequest.getEmail());
 
-            return new AuthTokenResponse(token);
+            return Map.of("accessToken", accessToken, "refreshToken", refreshTokenPayload);
         } catch (FeignException feignException) {
             System.out.println("Error from user service: " + feignException.getMessage());
             throw new RegException("Error from user service: " + feignException.getMessage());
@@ -164,6 +184,108 @@ public class UserServiceImpl implements UserService {
             e.printStackTrace();
             throw new Exception("Unknown Error has occurred");
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = {Exception.class})
+    public Map<String, String> authenticateUser(LoginRequest loginRequest) throws Exception {
+        try {
+            // Authenticate the user
+            Authentication authRequest = new OtpAuthenticationToken(loginRequest.getEmail(), loginRequest.getOtp());
+            Authentication authentication = authenticationManager.authenticate(authRequest);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // Reset failed attempts to zero
+            resetFailedAttempts(loginRequest.getEmail());
+
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+            // Generate an access token
+            String accessToken = accessTokenUtils.generateAccessTokenFromUserId(userDetails);
+
+            // Generate refresh token
+            String refreshToken = UUID.randomUUID().toString();
+            String refreshTokenHash = refreshTokenUtils.hashRefreshToken(refreshToken);
+            String refreshTokenPayload = refreshTokenUtils.generateRefreshToken(userDetails, refreshToken);
+
+            // Store refresh token hash in a database
+            User user = userRepository.findByUserId(userDetails.getUserId()).orElseThrow(()-> new UsernameNotFoundException("User not found"));
+            user.setRefreshToken(refreshTokenHash);
+            userRepository.save(user);
+
+            if(accessToken == null || refreshToken == null) {
+                throw new Exception("Error occurred while creating user");
+            }
+
+            // Delete otp from redis
+            otpService.deleteOtp(RequestType.LOGIN.name().toUpperCase(), loginRequest.getEmail());
+
+            return Map.of("accessToken", accessToken, "refreshToken", refreshTokenPayload);
+        } catch (BadCredentialsException ex){
+            try {
+                updateFailedAttempts(loginRequest.getEmail());
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+            throw new AuthException(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (DisabledException ex){
+            throw new AuthException("Invalid credentials or the user is disabled", HttpStatus.UNAUTHORIZED);
+        } catch (LockedException ex) {
+            throw new AuthException("Invalid credentials or the account is locked", HttpStatus.UNAUTHORIZED);
+        } catch (CredentialsExpiredException ex) {
+            throw new AuthException("Your password has expired. Please reset it.", HttpStatus.UNAUTHORIZED);
+        } catch (AccountExpiredException ex) {
+            throw new AuthException("Your account has expired. Contact support.", HttpStatus.UNAUTHORIZED);
+        } catch (AuthenticationException ex) {
+            throw new AuthException("Authentication failed", HttpStatus.UNAUTHORIZED);
+        } catch (Exception ex){
+            System.out.println(ex.getMessage());
+            throw new Exception("Unknown error has occurred");
+        }
+    }
+
+    @Override
+    public String getNewAccessToken(String refreshToken) throws Exception {
+        if (refreshToken == null) {
+            throw new AuthException("Invalid refresh token", HttpStatus.UNAUTHORIZED);
+        }
+
+        String userId = refreshTokenUtils.getUserIdFromRefToken(refreshToken);
+        String rawRefreshToken = refreshTokenUtils.getRawTokenFromRefToken(refreshToken);
+
+        if(userId == null || rawRefreshToken == null) {
+            throw new AuthException("Invalid refresh token", HttpStatus.UNAUTHORIZED);
+        }
+
+        User user = userRepository.findByUserId(userId).orElseThrow(()-> new UsernameNotFoundException("User not found"));
+        String refreshTokenHash = user.getRefreshToken();
+        if(refreshTokenHash == null || !refreshTokenUtils.verifyRefreshToken(rawRefreshToken, refreshTokenHash)){
+            throw new AuthException("Invalid refresh token", HttpStatus.UNAUTHORIZED);
+        }
+
+        return accessTokenUtils.generateAccessTokenFromUserId(customUserDetailsService.loadUserByUsername(userId));
+    }
+
+    @Override
+    @Transactional(rollbackFor = {Exception.class})
+    public void clearRefreshToken(String refreshToken) throws Exception{
+        if (refreshToken == null) {
+            throw new ApiException("Invalid refresh token");
+        }
+        String userId = refreshTokenUtils.getUserIdFromRefToken(refreshToken);
+        String rawRefreshToken = refreshTokenUtils.getRawTokenFromRefToken(refreshToken);
+        if(userId == null || rawRefreshToken == null) {
+            throw new ApiException("Invalid refresh token");
+        }
+
+        User user = userRepository.findByUserId(userId).orElseThrow(()-> new UsernameNotFoundException("User not found"));
+        String refreshTokenHash = user.getRefreshToken();
+        if(refreshTokenHash == null || !refreshTokenUtils.verifyRefreshToken(rawRefreshToken, refreshTokenHash)){
+            throw new ApiException("Invalid refresh token");
+        }
+        user.setRefreshToken(null);
+        userRepository.save(user);
+        System.out.println("Ref token cleared");
     }
 
     @Override
@@ -183,6 +305,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(rollbackFor = {Exception.class})
     public void updateUserRole(String userId, String roleName) throws Exception {
         User user = userRepository.findByUserId(userId).orElseThrow(
                 () -> new UsernameNotFoundException("User not found"));
@@ -192,6 +315,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(rollbackFor = {Exception.class})
     public void updateFailedAttempts(String email) {
         User user = getUserByEmail(email);
         if(user == null)return;
@@ -202,6 +326,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(rollbackFor = {Exception.class})
     public void resetFailedAttempts(String email) {
         User user = getUserByEmail(email);
         if(user == null)return;

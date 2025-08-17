@@ -27,6 +27,18 @@ spring:
                 durationInSeconds: 60
             - RewritePath=/(?<segment>auth/.*), /api/v1.0/${segment}
 
+        - id: token-service
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/auth/**
+          filters:
+            - name: RedisRateLimiter
+              args:
+                routeId: token-service
+                maxRequests: 3
+                durationInSeconds: 60
+            - RewritePath=/(?<segment>auth/.*), /api/v1.0/${segment}
+
 #        - id: auth-user-service
 #          uri: lb://AUTH-SERVICE
 #          predicates:

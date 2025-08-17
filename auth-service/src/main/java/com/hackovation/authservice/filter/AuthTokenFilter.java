@@ -3,7 +3,7 @@ package com.hackovation.authservice.filter;
 import com.hackovation.authservice.exception.AuthFilterException;
 import com.hackovation.authservice.service.CustomUserDetails;
 import com.hackovation.authservice.service.CustomUserDetailsService;
-import com.hackovation.authservice.util.SecureJwtUtils;
+import com.hackovation.authservice.util.AccessTokenUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -23,7 +22,7 @@ import java.io.IOException;
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter {
     @Autowired
-    private SecureJwtUtils jwtUtils;
+    private AccessTokenUtils accessTokenUtils;
 
     @Autowired
     private CustomUserDetailsService userDetailsService;
@@ -37,11 +36,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         try {
             String jwt = parseJwt(request);
             if (jwt != null) {
-                String userId = jwtUtils.getUserIdFromJwtToken(jwt);
+                String userId = accessTokenUtils.getUserIdFromAccessToken(jwt);
 
                 System.out.println("User ID: --> " + userId);
 
-                System.out.println("User Role: --->" + jwtUtils.getRoleFromJwtToken(jwt));
+                System.out.println("User Role: --->" + accessTokenUtils.getRoleFromAccessToken(jwt));
 
                 CustomUserDetails userDetails = userDetailsService.loadUserByUsername(userId);
 
@@ -72,7 +71,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     }
 
     private String parseJwt(HttpServletRequest request) {
-        String jwt = jwtUtils.getJwtFromHeader(request);
+        String jwt = accessTokenUtils.getAccessTokenFromHeader(request);
         logger.debug("AuthTokenFilter.java: {}", jwt);
         return jwt;
     }

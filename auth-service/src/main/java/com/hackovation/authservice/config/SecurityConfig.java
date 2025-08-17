@@ -31,12 +31,6 @@ public class SecurityConfig {
     @Autowired
     private CustomAuthEntryPoint unauthorizedHandler;
 
-    @Autowired
-    private AuthTokenFilter authTokenFilter;
-
-    @Autowired
-    private CustomUserDetailsService customUserDetailsService;
-
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
@@ -46,8 +40,6 @@ public class SecurityConfig {
                 .anyRequest().authenticated());
         http.exceptionHandling(exception
                 -> exception.authenticationEntryPoint(unauthorizedHandler));
-        http.addFilterBefore(authTokenFilter,
-                UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
