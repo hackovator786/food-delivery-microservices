@@ -1,7 +1,5 @@
 package com.hackovation.apigateway.filter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hackovation.apigateway.util.SecureJwtUtils;
 import com.nimbusds.jwt.JWTClaimsSet;
 import lombok.AllArgsConstructor;
@@ -21,9 +19,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 
 @Component

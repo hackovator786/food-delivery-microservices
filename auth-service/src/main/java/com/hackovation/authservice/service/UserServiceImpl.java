@@ -23,6 +23,7 @@ import com.hackovation.authservice.security.OtpAuthenticationToken;
 import com.hackovation.authservice.util.RefreshTokenUtils;
 import com.hackovation.authservice.util.AccessTokenUtils;
 import feign.FeignException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

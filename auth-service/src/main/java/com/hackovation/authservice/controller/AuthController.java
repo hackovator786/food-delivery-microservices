@@ -4,7 +4,6 @@ package com.hackovation.authservice.controller;
 import com.hackovation.authservice.dto.request.LoginRequest;
 import com.hackovation.authservice.dto.request.OtpRequest;
 import com.hackovation.authservice.dto.request.SignUpRequest;
-import com.hackovation.authservice.dto.response.AuthTokenResponse;
 import com.hackovation.authservice.dto.response.MessageResponse;
 import com.hackovation.authservice.enums.RequestType;
 import com.hackovation.authservice.service.UserService;
@@ -12,12 +11,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.http.HttpResponse;
 import java.util.Map;
 
 @RestController

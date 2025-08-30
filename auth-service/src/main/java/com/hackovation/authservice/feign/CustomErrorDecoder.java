@@ -1,7 +1,6 @@
 package com.hackovation.authservice.feign;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.hackovation.authservice.dto.response.ErrResponse;
 import feign.Response;
 import feign.codec.ErrorDecoder;

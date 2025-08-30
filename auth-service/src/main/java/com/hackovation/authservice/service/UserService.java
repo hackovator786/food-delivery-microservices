@@ -3,7 +3,6 @@ package com.hackovation.authservice.service;
 
 import com.hackovation.authservice.dto.request.LoginRequest;
 import com.hackovation.authservice.dto.request.SignUpRequest;
-import com.hackovation.authservice.dto.response.AuthTokenResponse;
 import com.hackovation.authservice.enums.RequestType;
 import com.hackovation.authservice.exception.RegException;
 import com.hackovation.authservice.model.User;
