@@ -81,12 +81,14 @@ public class UserServiceImpl implements UserService {
                 throw new RegException("Email is already in use!\nPlease login using your email or enter a different email");
             }
             if (requestType == RequestType.LOGIN && !userRepository.existsByEmail(email)) {
-                throw new RegException("Email does not exist\\nPlease signup or enter a valid email");
+                throw new AuthException("Email does not exist\\nPlease signup or enter a valid email", HttpStatus.BAD_REQUEST);
             }
             String otp = otpService.generateOtp(requestType.name().toUpperCase(), email);
             String emailData = new ObjectMapper().writeValueAsString(
                     new EmailVerificationData(email, otp));
             kafkaTemplate.send("user-verification", emailData);
+        } catch (RegException | AuthException e) {
+            throw e;
         } catch (JsonProcessingException e) {
             throw new Exception(e);
         } catch (Exception e){
@@ -182,8 +184,7 @@ public class UserServiceImpl implements UserService {
         } catch (RegException e) {
             throw e;
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new Exception("Unknown Error has occurred");
+            throw e;
         }
     }
 
@@ -215,7 +216,7 @@ public class UserServiceImpl implements UserService {
             userRepository.save(user);
 
             if(accessToken == null || refreshToken == null) {
-                throw new Exception("Error occurred while creating user");
+                throw new Exception("Error creating access token or refresh token");
             }
 
             // Delete otp from redis
@@ -240,8 +241,7 @@ public class UserServiceImpl implements UserService {
         } catch (AuthenticationException ex) {
             throw new AuthException("Authentication failed", HttpStatus.UNAUTHORIZED);
         } catch (Exception ex){
-            System.out.println(ex.getMessage());
-            throw new Exception("Unknown error has occurred");
+            throw ex;
         }
     }
 

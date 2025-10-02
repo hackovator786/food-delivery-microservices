@@ -6,6 +6,8 @@ import com.hackovation.authservice.dto.request.OtpRequest;
 import com.hackovation.authservice.dto.request.SignUpRequest;
 import com.hackovation.authservice.dto.response.MessageResponse;
 import com.hackovation.authservice.enums.RequestType;
+import com.hackovation.authservice.exception.AuthException;
+import com.hackovation.authservice.exception.RegException;
 import com.hackovation.authservice.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -33,9 +35,9 @@ public class AuthController {
     @PostMapping("/login/verify-otp")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) throws Exception {
         try {
-            Map<String, String> authenticateUserResponse = userService.authenticateUser(loginRequest);
-            String accessToken = authenticateUserResponse.get("accessToken");
-            String refreshToken = authenticateUserResponse.get("refreshToken");
+            Map<String, String> authResponse = userService.authenticateUser(loginRequest);
+            String accessToken = authResponse.get("accessToken");
+            String refreshToken = authResponse.get("refreshToken");
 
             // Create HttpOnly cookie for refresh token which is valid for 30 days
             ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
@@ -50,6 +52,8 @@ public class AuthController {
 
             // Send access token in JSON body
             return ResponseEntity.ok(Map.of("accessToken", accessToken));
+        } catch (AuthException e){
+            throw e;
         } catch (Exception e) {
             throw new Exception("Error during user authentication process");
         }
@@ -87,7 +91,10 @@ public class AuthController {
 
             // Send access token in JSON body
             return ResponseEntity.ok(Map.of("accessToken", accessToken));
+        } catch (RegException e){
+            throw e;
         } catch (Exception e) {
+            System.out.println("Exception during user registration: " + e);
             throw new Exception("Error during user registration process");
         }
     }
@@ -99,7 +106,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(@CookieValue(value = "refreshToken", required = false) String refreshToken) throws Exception {
+    public ResponseEntity<?> refreshToken(@CookieValue(value = "refreshToken") String refreshToken) throws Exception {
         System.out.println("Refresh token: " + refreshToken);
         String newAccessToken = userService.getNewAccessToken(refreshToken);
         return ResponseEntity.ok(Map.of(
