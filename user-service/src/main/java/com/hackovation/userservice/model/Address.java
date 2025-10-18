@@ -24,8 +24,16 @@ public class Address extends BaseModel{
     private Long id;
 
     @NotBlank
-    @Size(min = 2, max = 200, message = "Minimum length should be 2 and maximum length should be 200")
-    private String address;
+    @Size(min = 2, max = 10, message = "Minimum length should be 2 and maximum length should be 10")
+    private String doorNumber;
+
+    @NotBlank
+    @Size(min = 2, max = 50, message = "Minimum length should be 2 and maximum length should be 50")
+    private String street;
+
+    @NotBlank
+    @Size(min = 2, max = 20, message = "Minimum length should be 2 and maximum length should be 20")
+    private String area;
 
     @NotBlank
     @Size(min = 2, max = 100, message = "Minimum length should be 2 and maximum length should be 100")
@@ -35,11 +43,16 @@ public class Address extends BaseModel{
     @Size(min = 2, max = 20, message = "Minimum length should be 2 and maximum length should be 20")
     private String state;
 
+    @NotBlank
+    @Size(min = 2, max = 20, message = "Minimum length should be 2 and maximum length should be 20")
+    private String country = "India";
+
     @Min(100000)
     @Max(999999)
     private Integer zipcode;
 
-    @OneToOne(mappedBy = "address")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "fk_address_user"))
     private User user;
 
     @PrePersist

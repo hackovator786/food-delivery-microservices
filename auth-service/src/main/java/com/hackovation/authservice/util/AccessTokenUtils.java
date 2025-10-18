@@ -43,7 +43,6 @@ public class AccessTokenUtils {
     }
 
     public String generateAccessToken(CustomUserDetails userDetails, Integer roleId) throws Exception {
-        System.out.println("Inside generateAccessToken function - Role Id: " + roleId);
         String userId = userDetails.getUserId();
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .subject(userId)

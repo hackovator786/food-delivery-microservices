@@ -7,7 +7,10 @@ import com.hackovation.authservice.dto.data.EmailVerificationData;
 import com.hackovation.authservice.dto.request.LoginRequest;
 import com.hackovation.authservice.dto.request.OtpRequest;
 import com.hackovation.authservice.dto.request.SignUpRequest;
+import com.hackovation.authservice.dto.request.UserRequest;
 import com.hackovation.authservice.dto.response.ErrResponse;
+import com.hackovation.authservice.dto.response.ErrorResponse;
+import com.hackovation.authservice.dto.response.UserResponse;
 import com.hackovation.authservice.enums.RequestType;
 import com.hackovation.authservice.enums.UserRole;
 import com.hackovation.authservice.exception.ApiException;
@@ -130,24 +133,12 @@ public class UserServiceImpl implements UserService {
             }
 
             String userId = UUID.randomUUID().toString();
-            ResponseEntity<?> response;
             // Update the user role if the user is already present
             if (existingUser.isPresent()) {
                 User user = existingUser.get();
                 userId = user.getUserId();
                 user.addRole(role);
                 userRepository.save(user);
-
-                // Update user in user service
-//                response = userInterface.updateUser(
-//                        UserRequest
-//                                .builder()
-//                                .userId(userId)
-//                                .name(signUpRequest.getName())
-//                                .email(signUpRequest.getEmail())
-//                                .phoneNumber(null)
-//                                .userRole(userRole)
-//                                .build());
             } else {
                 // Create a new user's account
                 User user = new User(userId,
@@ -157,25 +148,23 @@ public class UserServiceImpl implements UserService {
                 userRepository.save(user);
 
                 // Create user in user service
-//                response = userInterface.createUser(
-//                        UserRequest
-//                                .builder()
-//                                .userId(userId)
-//                                .name(signUpRequest.getName())
-//                                .email(signUpRequest.getEmail())
-//                                .phoneNumber(null)
-//                                .userRole(userRole)
-//                                .build());
+                ResponseEntity<?> response = response = userInterface.createUser(
+                        UserRequest
+                                .builder()
+                                .userId(userId)
+                                .name(signUpRequest.getName())
+                                .email(signUpRequest.getEmail())
+                                .phoneNumber(null)
+                                .build());
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() instanceof Map<?, ?> map) {
+                    UserResponse userResponse = objectMapper.convertValue(map, UserResponse.class);
+                } else if (response.getBody() instanceof Map<?, ?> map) {
+                    ErrorResponse error = objectMapper.convertValue(map, ErrorResponse.class);
+                    System.out.println("Error: " + error.getMessage());
+                } else {
+                    System.out.println("Unexpected response format");
+                }
             }
-
-//            if (response.getStatusCode().is2xxSuccessful() && response.getBody() instanceof Map<?, ?> map) {
-//                UserResponse userResponse = objectMapper.convertValue(map, UserResponse.class);
-//            } else if (response.getBody() instanceof Map<?, ?> map) {
-//                ErrorResponse error = objectMapper.convertValue(map, ErrorResponse.class);
-//                System.out.println("Error: " + error.getMessage());
-//            } else {
-//                System.out.println("Unexpected response format");
-//            }
 
             CustomUserDetails customUserDetails = customUserDetailsService.loadUserByUsernameAndRole(userId, role);
 

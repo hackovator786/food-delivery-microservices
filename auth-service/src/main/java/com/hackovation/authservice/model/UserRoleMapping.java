@@ -67,4 +67,13 @@ public class UserRoleMapping extends BaseModel implements Serializable {
         return Objects.hash(id);
     }
 
+    @PrePersist
+    public void prePersist() {
+        super.prePersist();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        super.preUpdate();
+    }
 }

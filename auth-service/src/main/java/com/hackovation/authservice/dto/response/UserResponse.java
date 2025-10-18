@@ -16,5 +16,4 @@ public class UserResponse {
     private String name;
     private String email;
     private Long phoneNumber;
-    private Set<Integer> userRoles;
 }

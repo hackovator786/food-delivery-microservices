@@ -35,7 +35,6 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
 
     @Override
     public GatewayFilter apply(Config config) {
-        System.out.println("Filter executing");
         return ((exchange, chain) -> {
             ServerHttpRequest request = null;
             try {

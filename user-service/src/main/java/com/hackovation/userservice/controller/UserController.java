@@ -1,10 +1,8 @@
 package com.hackovation.userservice.controller;
 
 import com.hackovation.userservice.dto.request.UserRequest;
-import com.hackovation.userservice.dto.response.UserResponse;
 import com.hackovation.userservice.exception.ApiException;
 import com.hackovation.userservice.exception.RegException;
-import com.hackovation.userservice.model.User;
 import com.hackovation.userservice.service.UserServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

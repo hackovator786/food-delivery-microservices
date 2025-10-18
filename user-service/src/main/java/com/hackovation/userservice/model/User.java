@@ -19,11 +19,11 @@ import java.util.Set;
 @Table(
         name = "users",
         uniqueConstraints = {
-                @UniqueConstraint(name = "userId_unique", columnNames = "userId"),
+                @UniqueConstraint(name = "user_id_unique", columnNames = "user_id"),
                 @UniqueConstraint(name = "email_unique", columnNames = "email")
         },
         indexes = {
-                @Index(name = "userId_index", columnList = "userId"),
+                @Index(name = "user_id_index", columnList = "user_id"),
                 @Index(name = "email_index", columnList = "email")
         }
 )
@@ -46,17 +46,23 @@ public class User extends BaseModel {
 
     private Long phoneNumber;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "address_id")
-    private Address address;
-
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
     )
-    private Set<Role> roles = new HashSet<>();
+    private Set<Address> addresses = new HashSet<>();
+
+    public void addAddress(Address address) {
+        addresses.add(address);
+        address.setUser(this);
+    }
+
+    public void removeAddress(Address address) {
+        addresses.remove(address);
+        address.setUser(null);
+    }
 
     @PrePersist
     public void prePersist() {

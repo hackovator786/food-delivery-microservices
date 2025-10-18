@@ -37,7 +37,6 @@ public class RefreshTokenUtils {
     private int jwtRefreshExpirationMs;
 
     public String generateRefreshToken(CustomUserDetails userDetails, String refreshToken, Integer roleId) throws Exception {
-        System.out.println("Inside generateRefreshToken function - Role Id: " + roleId);
         String userId = userDetails.getUserId();
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .subject(userId)

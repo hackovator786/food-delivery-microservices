@@ -84,6 +84,7 @@ public class AuthController {
     @PostMapping("/signup/verify-otp")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignUpRequest signUpRequest, HttpServletResponse response) throws Exception {
         try {
+            System.out.println("Inside registerUser");
             Map<String, String> createUserAndGenerateAuthTokenResponse = userService.createUserAndGenerateAuthToken(signUpRequest);
             String accessToken = createUserAndGenerateAuthTokenResponse.get("accessToken");
             String refreshToken = createUserAndGenerateAuthTokenResponse.get("refreshToken");

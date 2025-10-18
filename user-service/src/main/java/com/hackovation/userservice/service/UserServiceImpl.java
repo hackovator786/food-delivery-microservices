@@ -2,12 +2,9 @@ package com.hackovation.userservice.service;
 
 import com.hackovation.userservice.dto.request.UserRequest;
 import com.hackovation.userservice.dto.response.UserResponse;
-import com.hackovation.userservice.enums.UserRole;
 import com.hackovation.userservice.exception.ApiException;
 import com.hackovation.userservice.exception.RegException;
-import com.hackovation.userservice.model.Role;
 import com.hackovation.userservice.model.User;
-import com.hackovation.userservice.repository.RoleRepository;
 import com.hackovation.userservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,28 +16,21 @@ import java.util.stream.Collectors;
 public class UserServiceImpl {
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private RoleRepository roleRepository;
-
 
     @Transactional(rollbackFor = {Exception.class})
     public UserResponse createUser(UserRequest userRequest) throws RegException, ApiException {
         if(userRepository.existsByUserId(userRequest.getUserId())) {
-            throw new RegException("User with id: " + userRequest.getUserId() + " already exists");
+            throw new RegException("User already exists");
         }
         if(userRepository.existsByEmail(userRequest.getEmail())) {
             throw new RegException("Email already exists");
         }
-        UserRole userRole = userRequest.getUserRole();
-
-        Role role = roleRepository.findByRoleName(userRole).orElseThrow(() -> new ApiException("Invalid role"));
 
         User user = new User();
         user.setUserId(userRequest.getUserId());
         user.setName(userRequest.getName());
         user.setEmail(userRequest.getEmail());
         user.setPhoneNumber(userRequest.getPhoneNumber());
-        user.getRoles().add(role);
 
         User saveduser = userRepository.save(user);
         return mapUserToUserResponse(saveduser);
@@ -58,12 +48,8 @@ public class UserServiceImpl {
             throw new ApiException("Incorrect email");
         }
 
-        UserRole userRole = userRequest.getUserRole();
-        Role role = roleRepository.findByRoleName(userRole).orElseThrow(() -> new ApiException("Invalid role"));
-
         user.setName(userRequest.getName());
         user.setPhoneNumber(userRequest.getPhoneNumber());
-        user.getRoles().add(role);
 
         User updatedUser = userRepository.save(user);
         return mapUserToUserResponse(updatedUser);
@@ -76,7 +62,6 @@ public class UserServiceImpl {
                     .name(user.getName())
                     .email(user.getEmail())
                     .phoneNumber(user.getPhoneNumber())
-                    .userRoles(user.getRoles().stream().map(Role::getRoleId).collect(Collectors.toSet()))
                     .build();
         }
         return null;
