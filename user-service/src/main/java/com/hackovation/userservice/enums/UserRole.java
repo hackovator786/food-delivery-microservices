@@ -1,4 +1,4 @@
-package com.hackovation.authservice.enums;
+package com.hackovation.userservice.enums;
 
 import lombok.Getter;
 

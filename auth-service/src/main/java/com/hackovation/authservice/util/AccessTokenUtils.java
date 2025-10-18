@@ -1,7 +1,6 @@
 package com.hackovation.authservice.util;
 
 import com.hackovation.authservice.exception.AuthException;
-import com.hackovation.authservice.exception.AuthFilterException;
 import com.hackovation.authservice.service.CustomUserDetails;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.*;
@@ -43,17 +42,12 @@ public class AccessTokenUtils {
         return null;
     }
 
-    public String generateAccessTokenFromUserId(CustomUserDetails userDetails) throws Exception {
+    public String generateAccessToken(CustomUserDetails userDetails, Integer roleId) throws Exception {
+        System.out.println("Inside generateAccessToken function - Role Id: " + roleId);
         String userId = userDetails.getUserId();
-        System.out.println("User ID: " + userId);
-        String role = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .findFirst()
-                .orElse(null);
-        System.out.println("User Role: " + role);
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .subject(userId)
-                .claim("role", role)
+                .claim("role", roleId.toString())
                 .issueTime(new Date())
                 .expirationTime(new Date(new Date().getTime() + jwtExpirationMs))
                 .build();
@@ -81,8 +75,8 @@ public class AccessTokenUtils {
         return validateAccessToken(token).getSubject();
     }
 
-    public String getRoleFromAccessToken(String token) throws Exception {
-        return validateAccessToken(token).getStringClaim("role");
+    public Integer getRoleFromAccessToken(String token) throws Exception {
+        return validateAccessToken(token).getIntegerClaim("role");
     }
 
     private JWTClaimsSet validateAccessToken(String authToken) throws Exception {

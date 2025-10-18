@@ -20,8 +20,8 @@ public class UserController {
     @Autowired
     private UserServiceImpl userService;
 
-    @PostMapping("/create")
-    public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest userRequest) throws RegException {
+    @PostMapping("/internal/create")
+    public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest userRequest) throws RegException, ApiException {
         System.out.println(userRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(userRequest));
     }
@@ -36,8 +36,8 @@ public class UserController {
         return "Address added";
     }
 
-    @PutMapping
-    public UserResponse updateUser(@RequestBody User user) {
-        return null;
+    @PutMapping("/internal/update")
+    public ResponseEntity<?> updateUser(@Valid @RequestBody UserRequest userRequest) throws ApiException {
+        return ResponseEntity.ok().body(userService.updateUser(userRequest));
     }
 }

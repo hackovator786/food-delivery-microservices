@@ -11,7 +11,7 @@ spring:
             - name: RedisRateLimiter
               args:
                 routeId: otp-service
-                maxRequests: 5
+                maxRequests: 15
                 durationInSeconds: 60
             - RewritePath=/(?<segment>auth/.*), /api/v1.0/${segment}
 
@@ -23,7 +23,19 @@ spring:
             - name: RedisRateLimiter
               args:
                 routeId: verify-service
-                maxRequests: 3
+                maxRequests: 10
+                durationInSeconds: 60
+            - RewritePath=/(?<segment>auth/.*), /api/v1.0/${segment}
+
+        - id: refresh-token-service
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/auth/refresh
+          filters:
+            - name: RedisRateLimiter
+              args:
+                routeId: refresh-token-service
+                maxRequests: 20
                 durationInSeconds: 60
             - RewritePath=/(?<segment>auth/.*), /api/v1.0/${segment}
 

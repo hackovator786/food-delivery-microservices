@@ -12,4 +12,8 @@ public class OtpRequest {
     @Size(min = 4, max = 70)
     @Email(message = "Invalid email address")
     private String email;
+
+    @NotBlank(message = "Role cannot be empty")
+    @Size(min = 4, max = 20, message = "Invalid role")
+    private String role;
 }

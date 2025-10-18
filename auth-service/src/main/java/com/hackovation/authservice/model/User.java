@@ -1,11 +1,16 @@
 package com.hackovation.authservice.model;
 
-import com.hackovation.authservice.enums.UserRole;
+import com.hackovation.authservice.exception.AuthException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @Data
@@ -30,33 +35,63 @@ public class User extends BaseModel {
     private String userId;
 
     @NotBlank
-    @Pattern(regexp = "^[a-zA-Z ]{1,40}$", message = "Invalid name")
-    private String name;
-
-    @NotBlank
     @Size(min = 4, max = 50, message = "Invalid email address")
     @Email(message = "Invalid email address")
     private String email;
 
     private Long phoneNumber;
 
-    @NotNull
-    private Boolean accountNonLocked = true;
-    @NotNull
-    private Integer failedAttempts = 0;
-    private Long lockedAt;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserRoleMapping> userRoles = new HashSet<>();
 
-    @Enumerated(EnumType.STRING)
-    private UserRole role;
-
-    private String refreshToken;
-
-
-    public User(String userId, String name, String email, UserRole role) {
+    public User(String userId, String email) {
         this.userId = userId;
-        this.name = name;
         this.email = email;
-        this.role = role;
+    }
+
+    public Set<Role> getRoles() {
+        Set<Role> roles = new HashSet<>();
+        for (UserRoleMapping mapping : userRoles) {
+            roles.add(mapping.getRole());
+        }
+        return roles;
+    }
+
+    public void addRole(Role role) {
+        UserRoleMapping mapping = new UserRoleMapping(this, role);
+        userRoles.add(mapping);
+        role.getUserRoles().add(mapping);
+    }
+
+    public void removeRole(Role role) {
+        userRoles.removeIf(mapping -> mapping.getRole().equals(role));
+        role.getUserRoles().removeIf(mapping -> mapping.getUser().equals(this));
+    }
+
+    public UserRoleMapping getUserRoleMapping(Role role) {
+        return getUserRoles().stream()
+                .filter(
+                        m -> Objects.equals(m.getRole().getId(), role.getId())
+                )
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User user)) return false;
+        return id != null && id.equals(user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode(); // Or Objects.hash(id) if id is assigned
+    }
+
+    public void validate() throws AuthException {
+        if( Objects.isNull(userRoles) || userRoles.isEmpty() )
+            throw new AuthException("User does not have any roles", HttpStatus.BAD_REQUEST);
     }
 
     @PrePersist

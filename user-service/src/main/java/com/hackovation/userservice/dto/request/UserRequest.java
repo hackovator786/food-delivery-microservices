@@ -1,11 +1,13 @@
 package com.hackovation.userservice.dto.request;
 
-import com.hackovation.userservice.model.UserRole;
+import com.hackovation.userservice.enums.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
+
+import java.util.Set;
 
 @Getter
 public class UserRequest {

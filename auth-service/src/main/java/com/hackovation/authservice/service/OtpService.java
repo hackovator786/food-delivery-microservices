@@ -18,18 +18,18 @@ public class OtpService {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
-    public String generateOtp(String prefix, String email) {
+    public String generateOtp(String prefix, String email, String role) {
         String otp = otpUtil.generateOtp(6);
-        redisTemplate.opsForValue().set(prefix + ":" + email, otpUtil.hashOtp(otp), EXPIRATION_MINUTES, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set(prefix + ":" + email + ":" + role, otpUtil.hashOtp(otp), EXPIRATION_MINUTES, TimeUnit.MINUTES);
         return otp;
     }
 
-    public Boolean validateOtp(String prefix, String email, String otp) {
-        String storedOtp = redisTemplate.opsForValue().get(prefix + ":" + email);
+    public Boolean validateOtp(String prefix, String email, String otp, String role) {
+        String storedOtp = redisTemplate.opsForValue().get(prefix + ":" + email + ":" + role);
         return storedOtp != null && otpUtil.verifyOtp(otp, storedOtp);
     }
 
-    public void deleteOtp(String prefix, String email) {
-        redisTemplate.delete(prefix + ":" +  email);
+    public void deleteOtp(String prefix, String email, String role) {
+        redisTemplate.delete(prefix + ":" +  email + ":" + role);
     }
 }

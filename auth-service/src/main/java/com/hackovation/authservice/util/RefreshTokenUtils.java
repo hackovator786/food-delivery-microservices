@@ -36,11 +36,13 @@ public class RefreshTokenUtils {
     @Value("${spring.app.jwtRefExpirationMs}")
     private int jwtRefreshExpirationMs;
 
-    public String generateRefreshToken(CustomUserDetails userDetails, String refreshToken) throws Exception {
+    public String generateRefreshToken(CustomUserDetails userDetails, String refreshToken, Integer roleId) throws Exception {
+        System.out.println("Inside generateRefreshToken function - Role Id: " + roleId);
         String userId = userDetails.getUserId();
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .subject(userId)
                 .claim("refreshToken", refreshToken)
+                .claim("role", roleId.toString())
                 .issueTime(new Date())
                 .expirationTime(new Date(new Date().getTime() + jwtRefreshExpirationMs))
                 .build();
@@ -66,6 +68,10 @@ public class RefreshTokenUtils {
 
     public String getUserIdFromRefToken(String token) throws Exception {
         return validateRefreshToken(token).getSubject();
+    }
+
+    public Integer getRoleIdFromRefToken(String token) throws Exception {
+        return validateRefreshToken(token).getIntegerClaim("role");
     }
 
     public String getRawTokenFromRefToken(String token) throws Exception {

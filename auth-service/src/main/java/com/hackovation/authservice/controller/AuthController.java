@@ -4,6 +4,7 @@ package com.hackovation.authservice.controller;
 import com.hackovation.authservice.dto.request.LoginRequest;
 import com.hackovation.authservice.dto.request.OtpRequest;
 import com.hackovation.authservice.dto.request.SignUpRequest;
+import com.hackovation.authservice.dto.response.ErrorResponse;
 import com.hackovation.authservice.dto.response.MessageResponse;
 import com.hackovation.authservice.enums.RequestType;
 import com.hackovation.authservice.exception.AuthException;
@@ -13,8 +14,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -28,7 +31,7 @@ public class AuthController {
 
     @PostMapping("/login/send-otp")
     public ResponseEntity<?> requestLoginOtp(@Valid @RequestBody OtpRequest otpRequest) throws Exception {
-        userService.generateOtpAndSend(RequestType.LOGIN, otpRequest.getEmail());
+        userService.generateOtpAndSend(RequestType.LOGIN, otpRequest);
         return ResponseEntity.ok(new MessageResponse("OTP sent successfully!"));
     }
 
@@ -52,22 +55,29 @@ public class AuthController {
 
             // Send access token in JSON body
             return ResponseEntity.ok(Map.of("accessToken", accessToken));
+        } catch (BadCredentialsException ex){
+            userService.updateFailedAttempts(loginRequest.getEmail(), loginRequest.getRole());
+            return new ResponseEntity<>(
+                    new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Authentication Error", ex.getMessage(), null)
+                    , HttpStatus.BAD_REQUEST);
         } catch (AuthException e){
             throw e;
         } catch (Exception e) {
+            e.printStackTrace();
             throw new Exception("Error during user authentication process");
         }
     }
 
     @PostMapping("/login/resend-otp")
     public ResponseEntity<?> resendLoginOtp(@Valid @RequestBody OtpRequest otpRequest) throws Exception {
-        userService.generateOtpAndSend(RequestType.LOGIN, otpRequest.getEmail());
+        userService.generateOtpAndSend(RequestType.LOGIN, otpRequest);
         return ResponseEntity.ok(new MessageResponse("OTP resent successfully!"));
     }
 
     @PostMapping("/signup/send-otp")
     public ResponseEntity<?> requestSignUpOtp(@Valid @RequestBody OtpRequest otpRequest) throws Exception {
-        userService.generateOtpAndSend(RequestType.SIGNUP, otpRequest.getEmail());
+        System.out.println("Inside requestSignUpOtp");
+        userService.generateOtpAndSend(RequestType.SIGNUP, otpRequest);
         return ResponseEntity.ok(new MessageResponse("OTP sent successfully!"));
     }
 
@@ -101,7 +111,7 @@ public class AuthController {
 
     @PostMapping("/signup/resend-otp")
     public ResponseEntity<?> resendOtp(@Valid @RequestBody OtpRequest otpRequest) throws Exception {
-        userService.generateOtpAndSend(RequestType.SIGNUP, otpRequest.getEmail());
+        userService.generateOtpAndSend(RequestType.SIGNUP, otpRequest);
         return ResponseEntity.ok(new MessageResponse("OTP resent successfully!"));
     }
 

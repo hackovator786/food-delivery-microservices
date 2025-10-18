@@ -1,7 +1,9 @@
 package com.hackovation.userservice.dto.response;
 
-import com.hackovation.userservice.model.UserRole;
+import com.hackovation.userservice.enums.UserRole;
 import lombok.*;
+
+import java.util.Set;
 
 @Data
 @Builder
@@ -10,5 +12,5 @@ public class UserResponse {
     private String name;
     private String email;
     private Long phoneNumber;
-    private UserRole userRole;
+    private Set<Integer> userRoles;
 }
