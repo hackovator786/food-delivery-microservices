@@ -54,8 +54,10 @@ public class SecureJwtUtils {
             return jwe.getJWTClaimsSet();
         } catch (ParseException | JOSEException |
                  IllegalArgumentException | NullPointerException | SecurityException e){
+            logger.error("Invalid JWT Token: {}", e.getMessage());
             throw new RuntimeException("Invalid JWT Token");
         } catch (Exception e) {
+            logger.error("Unknown Error has occurred: {}", e.getMessage());
             throw new RuntimeException("Unknown Error has occurred");
         }
     }

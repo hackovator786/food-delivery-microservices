@@ -46,7 +46,7 @@ public class AccessTokenUtils {
         String userId = userDetails.getUserId();
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .subject(userId)
-                .claim("role", roleId.toString())
+                .claim("roleId", roleId)
                 .issueTime(new Date())
                 .expirationTime(new Date(new Date().getTime() + jwtExpirationMs))
                 .build();
