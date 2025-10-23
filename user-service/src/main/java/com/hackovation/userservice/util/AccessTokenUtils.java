@@ -1,16 +1,17 @@
-package com.hackovation.apigateway.util;
+package com.hackovation.userservice.util;
 
-import com.nimbusds.jose.*;
+import com.hackovation.userservice.exception.AuthFilterException;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.crypto.DirectDecrypter;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.EncryptedJWT;
 import com.nimbusds.jwt.JWTClaimsSet;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
-
 
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -18,8 +19,8 @@ import java.text.ParseException;
 import java.util.Date;
 
 @Component
-public class SecureJwtUtils {
-    private static final Logger logger = LoggerFactory.getLogger(SecureJwtUtils.class);
+public class AccessTokenUtils {
+    private static final Logger logger = LoggerFactory.getLogger(AccessTokenUtils.class);
 
     @Value("${spring.app.jwtSecret}")
     private String jwtSigningSecret;
@@ -27,7 +28,15 @@ public class SecureJwtUtils {
     @Value("${spring.app.jwtEncryptionSecret}")
     private String jwtEncryptSecret;
 
-    public JWTClaimsSet validateJwtToken(String authToken)  throws RuntimeException {
+    public String getAccessTokenFromHeader(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+
+    public JWTClaimsSet validateAccessToken(String authToken) throws Exception {
         try {
             JWSObject jws = JWSObject.parse(authToken);
 
@@ -46,11 +55,9 @@ public class SecureJwtUtils {
             return jwe.getJWTClaimsSet();
         } catch (ParseException | JOSEException |
                  IllegalArgumentException | NullPointerException | SecurityException e){
-            logger.error("Invalid JWT Token: {}", e.getMessage());
-            throw new RuntimeException("Invalid JWT Token");
+            throw new AuthFilterException("Invalid JWT Token");
         } catch (Exception e) {
-            logger.error("Unknown Error has occurred: {}", e.getMessage());
-            throw new RuntimeException("Unknown Error has occurred");
+            throw new Exception("Unknown Error has occurred");
         }
     }
 

@@ -12,29 +12,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/user")
 @RequiredArgsConstructor
 public class UserController {
     @Autowired
     private UserServiceImpl userService;
 
-    @PostMapping("/internal/create")
+    @PostMapping("/internal/user/create")
     public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest userRequest) throws RegException, ApiException {
         System.out.println(userRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(userRequest));
     }
 
-    @GetMapping("/info")
+    @GetMapping("/user/info")
     public ResponseEntity<?> getUser(@RequestHeader("loggedInUser") String userId) throws ApiException {
         return ResponseEntity.ok().body(userService.getUser(userId));
     }
 
-    @PostMapping("/address")
+    @PostMapping("/user/address")
     public String addAddress() {
         return "Address added";
     }
 
-    @PutMapping("/internal/update")
+    @PutMapping("/internal/user/update")
     public ResponseEntity<?> updateUser(@Valid @RequestBody UserRequest userRequest) throws ApiException {
         return ResponseEntity.ok().body(userService.updateUser(userRequest));
     }

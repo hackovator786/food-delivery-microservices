@@ -74,11 +74,6 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
                     userRoleId = claimsSet.getIntegerClaim("roleId");
                     System.out.println("User ID: " + userId);
                     System.out.println("User Role Id: " + userRoleId);
-                    request = exchange.getRequest()
-                            .mutate()
-                            .header("loggedInUser", userId)
-                            .header("loggedInUserRoleId", userRoleId.toString())
-                            .build();
                 } catch (Exception e) {
                     System.out.println("Invalid access token");
                     throw new RuntimeException("Invalid access token");

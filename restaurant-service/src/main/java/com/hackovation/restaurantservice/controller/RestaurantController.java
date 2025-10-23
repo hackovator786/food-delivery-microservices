@@ -32,4 +32,9 @@ public class RestaurantController {
     public ResponseEntity<?> getRestaurantName(@RequestParam("restaurant-id") String restaurantId, @RequestParam("user-id") String userId) throws ApiException {
         return ResponseEntity.ok().body(Map.of("name", restaurantService.getRestaurantName(restaurantId, userId)));
     }
+
+    @GetMapping("/test")
+    public ResponseEntity<?> test(@RequestHeader("loggedInUser") String username) {
+        return ResponseEntity.ok().body("test --> " + username);
+    }
 }
