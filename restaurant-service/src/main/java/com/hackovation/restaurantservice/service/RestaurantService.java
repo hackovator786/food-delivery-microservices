@@ -60,5 +60,11 @@ public class RestaurantService {
         return name;
     }
 
+    public String getRestaurantId(String userId) throws ApiException{
+        String restaurantId = restaurantRepository.getRestaurantIdByOwnerId(userId); // userId is the ownerId
+        System.out.println("Inside Restaurant service --> Restaurant Id: " + restaurantId);
+        return restaurantId;
+    }
+
 
 }

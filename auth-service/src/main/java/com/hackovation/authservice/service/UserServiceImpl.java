@@ -17,6 +17,7 @@ import com.hackovation.authservice.exception.ApiException;
 import com.hackovation.authservice.exception.AuthException;
 import com.hackovation.authservice.exception.RegException;
 import com.hackovation.authservice.feign.FeignExceptionWrapper;
+import com.hackovation.authservice.feign.RestaurantInterface;
 import com.hackovation.authservice.feign.UserInterface;
 import com.hackovation.authservice.model.Role;
 import com.hackovation.authservice.model.User;
@@ -28,6 +29,7 @@ import com.hackovation.authservice.security.OtpAuthenticationToken;
 import com.hackovation.authservice.util.RefreshTokenUtils;
 import com.hackovation.authservice.util.AccessTokenUtils;
 import feign.FeignException;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -76,6 +78,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserInterface userInterface;
+
+    @Autowired
+    private RestaurantInterface restaurantInterface;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -169,7 +174,8 @@ public class UserServiceImpl implements UserService {
             CustomUserDetails customUserDetails = customUserDetailsService.loadUserByUsernameAndRole(userId, role);
 
             // Generate an access token
-            String accessToken = accessTokenUtils.generateAccessToken(customUserDetails, role.getRoleId());
+            String accessToken = accessTokenUtils.generateAccessToken(customUserDetails,
+                    "roleId", role.getRoleId());
 
             // Generate refresh token
             String refreshToken = UUID.randomUUID().toString();
@@ -225,8 +231,17 @@ public class UserServiceImpl implements UserService {
 
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
+            // Get Restaurant ID if the role is RESTAURANT_OWNER
+            String restaurantId = null;
+            if(userRole.name().equals("ROLE_RESTAURANT_OWNER")) {
+                restaurantId = getRestaurantId(userDetails);
+            }
+
             // Generate an access token
-            String accessToken = accessTokenUtils.generateAccessToken(userDetails, role.getRoleId());
+            String accessToken = accessTokenUtils.generateAccessToken(userDetails,
+                    "roleId", role.getRoleId(),
+                    "restaurantId", restaurantId
+            );
 
             // Generate refresh token
             String refreshToken = UUID.randomUUID().toString();
@@ -294,7 +309,18 @@ public class UserServiceImpl implements UserService {
             throw new AuthException("Invalid refresh token", HttpStatus.UNAUTHORIZED);
         }
 
-        return accessTokenUtils.generateAccessToken(customUserDetailsService.loadUserByUsernameAndRole(userId, role), roleId);
+        CustomUserDetails userDetails = customUserDetailsService.loadUserByUsernameAndRole(userId, role);
+
+        // Get Restaurant ID if the role is RESTAURANT_OWNER
+        String restaurantId = null;
+        if(role.getRoleName() == UserRole.ROLE_RESTAURANT_OWNER) {
+            restaurantId = getRestaurantId(userDetails);
+        }
+
+        return accessTokenUtils.generateAccessToken(userDetails,
+                "roleId",roleId,
+                "restaurantId", restaurantId
+        );
     }
 
     @Override
@@ -392,4 +418,33 @@ public class UserServiceImpl implements UserService {
         System.out.println(expiredLockedUsers);
     }
 
+    private String getRestaurantId(CustomUserDetails userDetails) throws Exception {
+        String restaurantId = null;
+        try {
+            ResponseEntity<?> response = restaurantInterface.getRestaurantId(userDetails.getUserId());
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() instanceof Map<?, ?> map) {
+                RestaurantResponse restaurantResponse = objectMapper.convertValue(map, RestaurantResponse.class);
+                restaurantId = restaurantResponse.getRestaurantId();
+            } else if (response.getBody() instanceof Map<?, ?> map) {
+                ErrorResponse error = objectMapper.convertValue(map, ErrorResponse.class);
+                System.out.println("Error: " + error.getMessage());
+            } else {
+                System.out.println("Unexpected response format");
+            }
+        } catch (FeignException feignException) {
+            System.out.println("Error from restaurant service: " + feignException.getMessage());
+        } catch (FeignExceptionWrapper ex) {
+            ErrResponse error = ex.getErrorResponse();
+            System.out.println("Error from restaurant service: " + error.getMessage());
+        } catch (Exception e){
+            System.out.println("Unexpected error: " + e.getMessage());
+        }
+        System.out.println("UserServiceImpl --> Restaurant ID: " + restaurantId);
+        return restaurantId;
+    }
+
+    private static class RestaurantResponse {
+        @Getter
+        private String restaurantId;
+    }
 }

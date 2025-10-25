@@ -2,6 +2,7 @@ package com.hackovation.restaurantservice.config;
 
 
 import com.hackovation.restaurantservice.filter.AuthTokenFilter;
+import com.hackovation.restaurantservice.filter.ValidationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,9 @@ public class SecurityConfig {
     @Autowired
     private AuthTokenFilter authTokenFilter;
 
+    @Autowired
+    private ValidationFilter validationFilter;
+
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
@@ -36,6 +40,7 @@ public class SecurityConfig {
                 -> exception.authenticationEntryPoint(unauthorizedHandler));
         http.addFilterBefore(authTokenFilter,
                 UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(validationFilter, AuthTokenFilter.class);
         return http.build();
     }
 

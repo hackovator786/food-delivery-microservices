@@ -2,6 +2,7 @@ package com.hackovation.restaurantservice.filter;
 
 import com.hackovation.restaurantservice.exception.AuthFilterException;
 import com.hackovation.restaurantservice.utils.AccessTokenUtils;
+import com.hackovation.restaurantservice.utils.CustomHeaderRequestWrapper;
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,14 +30,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
 
-    @Value("${spring.app.role.role_customer}")
-    private Integer ROLE_CUSTOMER;
     @Value("${spring.app.role.role_admin}")
     private Integer ROLE_ADMIN;
     @Value("${spring.app.role.role_restaurant_owner}")
     private Integer ROLE_RESTAURANT_OWNER;
-    @Value("${spring.app.role.role_delivery_agent}")
-    private Integer ROLE_DELIVERY_AGENT;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -44,10 +41,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         HttpServletRequest wrappedRequest = request;
                 logger.debug("AuthTokenFilter called for URI: {}", request.getRequestURI());
         Map<Integer, String> roles = Map.of(
-                ROLE_CUSTOMER, "ROLE_CUSTOMER",
                 ROLE_ADMIN, "ROLE_ADMIN",
-                ROLE_RESTAURANT_OWNER, "ROLE_RESTAURANT_OWNER",
-                ROLE_DELIVERY_AGENT, "ROLE_DELIVERY_AGENT"
+                ROLE_RESTAURANT_OWNER, "ROLE_RESTAURANT_OWNER"
         );
         try {
             String jwt = parseJwt(request);
@@ -55,10 +50,14 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 JWTClaimsSet claimsSet = accessTokenUtils.validateAccessToken(jwt);
                 String userId = claimsSet.getSubject();
                 Integer userRoleId = claimsSet.getIntegerClaim("roleId");
+                String restaurantId = claimsSet.getStringClaim("restaurantId");
+                System.out.println("User Id: " + userId);
+                System.out.println("Role Id: " + userRoleId);
+                System.out.println("Restaurant Id: " + restaurantId);
+                if (userId == null || userId.isEmpty() || userRoleId == null) {
+                    throw new AuthFilterException("Invalid JWT Token");
+                }
                 List<String> rolesList = List.of(roles.getOrDefault(userRoleId, "NONE"));
-                System.out.println("User ID: --> " + userId);
-                System.out.println("User Role ID: --->" + userRoleId);
-                System.out.println("User Roles: ---->" + rolesList);
 
                 List<SimpleGrantedAuthority> authorities = rolesList
                         .stream()
@@ -70,6 +69,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
                 Map<String, String> customHeaders = new HashMap<>();
                 customHeaders.put("loggedInUser", userId);
+                customHeaders.put("restaurantId", restaurantId != null ? restaurantId : "" );
 
                 wrappedRequest = new CustomHeaderRequestWrapper(request, customHeaders);
 
@@ -94,46 +94,5 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         String jwt = accessTokenUtils.getAccessTokenFromHeader(request);
         logger.debug("AuthTokenFilter.java: {}", jwt);
         return jwt;
-    }
-
-
-    /**
-     * Custom request wrapper to inject multiple headers.
-     */
-    private static class CustomHeaderRequestWrapper extends HttpServletRequestWrapper {
-
-        private final Map<String, String> customHeaders;
-
-        public CustomHeaderRequestWrapper(HttpServletRequest request, Map<String, String> customHeaders) {
-            super(request);
-            this.customHeaders = new HashMap<>(customHeaders);
-        }
-
-        @Override
-        public String getHeader(String name) {
-            String headerValue = customHeaders.get(name);
-            if (headerValue != null) {
-                return headerValue;
-            }
-            return super.getHeader(name);
-        }
-
-        @Override
-        public Enumeration<String> getHeaderNames() {
-            Set<String> names = new HashSet<>(customHeaders.keySet());
-            Enumeration<String> originalNames = super.getHeaderNames();
-            while (originalNames.hasMoreElements()) {
-                names.add(originalNames.nextElement());
-            }
-            return Collections.enumeration(names);
-        }
-
-        @Override
-        public Enumeration<String> getHeaders(String name) {
-            if (customHeaders.containsKey(name)) {
-                return Collections.enumeration(List.of(customHeaders.get(name)));
-            }
-            return super.getHeaders(name);
-        }
     }
 }

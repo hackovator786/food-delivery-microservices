@@ -70,7 +70,7 @@ public class RefreshTokenUtils {
     }
 
     public Integer getRoleIdFromRefToken(String token) throws Exception {
-        return validateRefreshToken(token).getIntegerClaim("role");
+        return validateRefreshToken(token).getIntegerClaim("roleId");
     }
 
     public String getRawTokenFromRefToken(String token) throws Exception {

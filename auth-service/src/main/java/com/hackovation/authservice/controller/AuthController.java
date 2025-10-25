@@ -10,6 +10,7 @@ import com.hackovation.authservice.enums.RequestType;
 import com.hackovation.authservice.exception.AuthException;
 import com.hackovation.authservice.exception.RegException;
 import com.hackovation.authservice.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,7 +119,6 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@CookieValue(value = "refreshToken") String refreshToken) throws Exception {
-        System.out.println("Refresh token: " + refreshToken);
         String newAccessToken = userService.getNewAccessToken(refreshToken);
         return ResponseEntity.ok(Map.of(
                 "accessToken", newAccessToken

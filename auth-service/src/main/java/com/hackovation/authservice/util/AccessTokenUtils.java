@@ -42,14 +42,20 @@ public class AccessTokenUtils {
         return null;
     }
 
-    public String generateAccessToken(CustomUserDetails userDetails, Integer roleId) throws Exception {
+    public String generateAccessToken(CustomUserDetails userDetails, Object... keyValues) throws Exception {
         String userId = userDetails.getUserId();
-        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+        JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder()
                 .subject(userId)
-                .claim("roleId", roleId)
                 .issueTime(new Date())
-                .expirationTime(new Date(new Date().getTime() + jwtExpirationMs))
-                .build();
+                .expirationTime(new Date(new Date().getTime() + jwtExpirationMs));
+
+        for (int i = 0; i < keyValues.length; i += 2) {
+            String key = keyValues[i].toString();
+            Object value = keyValues[i + 1];
+            claimsSetBuilder.claim(key, value);
+        }
+
+        JWTClaimsSet claimsSet = claimsSetBuilder.build();
 
         EncryptedJWT jwe = new EncryptedJWT(
                 new JWEHeader.Builder(JWEAlgorithm.DIR, EncryptionMethod.A256GCM)
@@ -70,15 +76,17 @@ public class AccessTokenUtils {
         return jws.serialize();
     }
 
+    @Deprecated
     public String getUserIdFromAccessToken(String token) throws Exception {
         return validateAccessToken(token).getSubject();
     }
 
+    @Deprecated
     public Integer getRoleFromAccessToken(String token) throws Exception {
         return validateAccessToken(token).getIntegerClaim("role");
     }
 
-    private JWTClaimsSet validateAccessToken(String authToken) throws Exception {
+    public JWTClaimsSet validateAccessToken(String authToken) throws Exception {
         try {
             JWSObject jws = JWSObject.parse(authToken);
 
@@ -89,10 +97,10 @@ public class AccessTokenUtils {
             EncryptedJWT jwe = EncryptedJWT.parse(jws.getPayload().toString());
             jwe.decrypt(new DirectDecrypter(aesKey()));
 
-            Date now = new Date();
-            if (jwe.getJWTClaimsSet().getExpirationTime().before(now)) {
-                throw new SecurityException("Token expired");
-            }
+//            Date now = new Date();
+//            if (jwe.getJWTClaimsSet().getExpirationTime().before(now)) {
+//                throw new SecurityException("Token expired");
+//            }
 
             return jwe.getJWTClaimsSet();
         } catch (ParseException | JOSEException |

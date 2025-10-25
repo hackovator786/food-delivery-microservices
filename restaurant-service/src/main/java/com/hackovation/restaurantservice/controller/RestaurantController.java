@@ -12,15 +12,14 @@ import java.util.Map;
 
 
 @RestController
-@RequestMapping("/restaurant")
 @RequiredArgsConstructor
 public class RestaurantController {
 
     private final RestaurantService restaurantService;
-    @PostMapping("/create")
+    @PostMapping("/restaurant/create")
     public ResponseEntity<?> addRestaurant(@RequestBody RestaurantRequest request,
-                                        @RequestHeader("loggedInUser") String username) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(restaurantService.addRestaurant(request, username));
+                                        @RequestHeader("loggedInUser") String userId) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(restaurantService.addRestaurant(request, userId));
     }
 
 //    @GetMapping
@@ -28,13 +27,18 @@ public class RestaurantController {
 //        return restaurantService.getAllRestaurants();
 //    }
 //
-    @GetMapping
-    public ResponseEntity<?> getRestaurantName(@RequestParam("restaurant-id") String restaurantId, @RequestParam("user-id") String userId) throws ApiException {
+    @GetMapping("/restaurant/restaurant-name")
+    public ResponseEntity<?> getRestaurantName(@RequestHeader("restaurantId") String restaurantId, @RequestHeader("LoggedInUser") String userId) throws ApiException {
         return ResponseEntity.ok().body(Map.of("name", restaurantService.getRestaurantName(restaurantId, userId)));
     }
 
-    @GetMapping("/test")
-    public ResponseEntity<?> test(@RequestHeader("loggedInUser") String username) {
-        return ResponseEntity.ok().body("test --> " + username);
+    @GetMapping("/internal/restaurant-id")
+    public ResponseEntity<?> getRestaurantId(@RequestParam("user-id") String userId) throws ApiException {
+        return ResponseEntity.ok().body(Map.of("restaurantId", restaurantService.getRestaurantId(userId)));
+    }
+
+    @GetMapping("/restaurant/test")
+    public ResponseEntity<?> test(@RequestHeader("loggedInUser") String username, @RequestHeader("restaurantId") String restaurantId) {
+        return ResponseEntity.ok().body("test --> " + username + " restaurant Id ---> " + restaurantId);
     }
 }
