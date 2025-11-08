@@ -24,10 +24,10 @@ public class MenuItemController {
     @Autowired
     private MenuItemService menuItemService;
 
-    @PostMapping("/add-item/{restaurantId}")
+    @PostMapping("/add-item")
     public ResponseEntity<?> addMenuItem(@RequestPart("menuItem") String menuItemString,
                               @RequestPart("file") MultipartFile file,
-                              @PathVariable("restaurantId") String restaurantId, @RequestHeader("loggedInUser") String userId) throws Exception {
+                              @RequestHeader("restaurantId") String restaurantId, @RequestHeader("loggedInUser") String userId) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             System.out.println("MenuItemString: " + menuItemString);
@@ -42,23 +42,23 @@ public class MenuItemController {
         }
     }
 
-    @PostMapping("/add-category/{restaurantId}")
+    @PostMapping("/add-category")
     public ResponseEntity<?> addMenuCategory(@RequestBody MenuCategoryRequest menuCategoryRequest,
-                                             @PathVariable("restaurantId") String restaurantId) throws Exception {
+                                             @RequestHeader("restaurantId") String restaurantId) throws Exception {
         return ResponseEntity.status(HttpStatus.CREATED).body(menuItemService.addCategory(restaurantId,menuCategoryRequest));
     }
 
-    @GetMapping("/{restaurantId}")
-    public List<MenuItemResponse> getAllFoodItems(@PathVariable("restaurantId") String restaurantId) {
+    @GetMapping
+    public List<MenuItemResponse> getAllFoodItems(@RequestHeader("restaurantId") String restaurantId) {
         return menuItemService.getAllMenuItems(restaurantId);
     }
 
-    @PutMapping("/update-menu-item/{restaurantId}/{menuItemId}")
+    @PutMapping("/update-menu-item/{menuItemId}")
     public ResponseEntity<?> updateMenuItem(
             @PathVariable("menuItemId") String menuItemId,
             @RequestPart(value = "menuItem", required = false) String menuItemString,
             @RequestPart(value = "file", required = false) MultipartFile file,
-            @PathVariable("restaurantId") String restaurantId,
+            @RequestHeader("restaurantId") String restaurantId,
             @RequestHeader("loggedInUser") String userId) throws Exception {
         if (menuItemString == null) {
             throw new ApiException("Menu item data is required");
@@ -77,10 +77,10 @@ public class MenuItemController {
         }
     }
 
-    @DeleteMapping("/delete-menu-item/{restaurantId}/{menuItemId}")
+    @DeleteMapping("/delete-menu-item/{menuItemId}")
     public ResponseEntity<?> deleteMenuItem(
             @PathVariable("menuItemId") String menuItemId,
-            @PathVariable("restaurantId") String restaurantId,
+            @RequestHeader("restaurantId") String restaurantId,
             @RequestHeader("loggedInUser") String userId) throws Exception {
         
         String response = menuItemService.deleteMenuItem(menuItemId, restaurantId, userId);
