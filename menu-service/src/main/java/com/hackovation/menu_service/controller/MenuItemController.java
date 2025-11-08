@@ -48,7 +48,7 @@ public class MenuItemController {
         return ResponseEntity.status(HttpStatus.CREATED).body(menuItemService.addCategory(restaurantId,menuCategoryRequest));
     }
 
-    @GetMapping
+    @GetMapping("/get-menu-items")
     public List<MenuItemResponse> getAllFoodItems(@RequestHeader("restaurantId") String restaurantId) {
         return menuItemService.getAllMenuItems(restaurantId);
     }

@@ -268,7 +268,8 @@ public class MenuItemService {
                     .build();
             PutObjectResponse response = s3Client.putObject(request, RequestBody.fromBytes(file.getBytes()));
             if (response.sdkHttpResponse().isSuccessful()) {
-                return "https://" + bucketName + ".s3.amazonaws.com/" + key;
+//                return "https://" + bucketName + ".s3.amazonaws.com/" + key;
+                return key;
             } else {
                 throw new Exception("Failed to upload file to S3");
             }

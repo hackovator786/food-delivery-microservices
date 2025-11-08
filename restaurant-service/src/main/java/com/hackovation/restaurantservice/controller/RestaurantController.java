@@ -27,8 +27,8 @@ public class RestaurantController {
 //        return restaurantService.getAllRestaurants();
 //    }
 //
-    @GetMapping("/restaurant/restaurant-name")
-    public ResponseEntity<?> getRestaurantName(@RequestHeader("restaurantId") String restaurantId, @RequestHeader("LoggedInUser") String userId) throws ApiException {
+    @GetMapping("/internal/restaurant-name")
+    public ResponseEntity<?> getRestaurantName(@RequestParam("restaurant-id") String restaurantId, @RequestParam("user-id") String userId) throws ApiException {
         return ResponseEntity.ok().body(Map.of("name", restaurantService.getRestaurantName(restaurantId, userId)));
     }
 
