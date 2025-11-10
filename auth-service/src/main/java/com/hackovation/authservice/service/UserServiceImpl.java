@@ -291,6 +291,9 @@ public class UserServiceImpl implements UserService {
         Integer roleId = refreshTokenUtils.getRoleIdFromRefToken(refreshToken);
         String rawRefreshToken = refreshTokenUtils.getRawTokenFromRefToken(refreshToken);
 
+        System.out.println("User ID: " + userId);
+        System.out.println("Role ID: " + roleId);
+        System.out.println("Raw Refresh Token: " + rawRefreshToken);
         if (userId == null || rawRefreshToken == null || roleId == null) {
             throw new AuthException("Invalid refresh token", HttpStatus.UNAUTHORIZED);
         }

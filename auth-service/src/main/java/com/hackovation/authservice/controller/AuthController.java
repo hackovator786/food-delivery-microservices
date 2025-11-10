@@ -119,6 +119,7 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@CookieValue(value = "refreshToken") String refreshToken) throws Exception {
+        System.out.println("Inside refreshToken\nRefresh token: " + refreshToken);
         String newAccessToken = userService.getNewAccessToken(refreshToken);
         return ResponseEntity.ok(Map.of(
                 "accessToken", newAccessToken

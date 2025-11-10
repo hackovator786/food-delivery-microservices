@@ -41,7 +41,7 @@ public class RefreshTokenUtils {
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .subject(userId)
                 .claim("refreshToken", refreshToken)
-                .claim("role", roleId.toString())
+                .claim("role", roleId)
                 .issueTime(new Date())
                 .expirationTime(new Date(new Date().getTime() + jwtRefreshExpirationMs))
                 .build();
@@ -70,7 +70,7 @@ public class RefreshTokenUtils {
     }
 
     public Integer getRoleIdFromRefToken(String token) throws Exception {
-        return validateRefreshToken(token).getIntegerClaim("roleId");
+        return validateRefreshToken(token).getIntegerClaim("role");
     }
 
     public String getRawTokenFromRefToken(String token) throws Exception {
