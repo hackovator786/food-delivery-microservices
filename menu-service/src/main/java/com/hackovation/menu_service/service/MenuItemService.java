@@ -320,7 +320,7 @@ public class MenuItemService {
     private MenuItemResponse convertToMenuItemResponse(MenuItem menuItem) {
         return MenuItemResponse.builder()
                 .menuItemId(menuItem.getMenuItemId())
-                .restaurantId(menuItem.getRestaurantId())
+//                .restaurantId(menuItem.getRestaurantId())
                 .name(menuItem.getMenuItemName())
                 .description(menuItem.getDescription())
                 .price(menuItem.getPrice())
