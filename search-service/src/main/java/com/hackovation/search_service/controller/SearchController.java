@@ -2,7 +2,9 @@ package com.hackovation.search_service.controller;
 
 import com.hackovation.search_service.dto.SearchRequestDto;
 import com.hackovation.search_service.model.MenuItemDocument;
+import com.hackovation.search_service.model.RestaurantDocument;
 import com.hackovation.search_service.service.MenuItemSearchService;
+import com.hackovation.search_service.service.RestaurantService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,10 +15,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/search")
-public class MenuItemSearchController {
+public class SearchController {
 
     @Autowired
     private MenuItemSearchService menuItemService;
+
+    @Autowired
+    private RestaurantService restaurantService;
 
     @GetMapping("/item")
     public Page<MenuItemDocument> searchMenuItems(
@@ -42,5 +47,15 @@ public class MenuItemSearchController {
                 .build();
 
         return menuItemService.searchMenuItems(dto, PageRequest.of(page, size));
+    }
+
+    @GetMapping("/all-items")
+    public List<MenuItemDocument> getAllMenuItems() throws IOException {
+        return menuItemService.getAllMenuItems();
+    }
+
+    @GetMapping("/all-restaurants")
+    public List<RestaurantDocument> getAllRestaurants() throws IOException {
+        return restaurantService.getAllRestaurants();
     }
 }

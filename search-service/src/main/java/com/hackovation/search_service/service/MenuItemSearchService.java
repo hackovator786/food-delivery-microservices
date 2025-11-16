@@ -6,6 +6,7 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.hackovation.search_service.dto.SearchRequestDto;
 import com.hackovation.search_service.model.MenuItemDocument;
+import com.hackovation.search_service.repository.MenuItemSearchRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -16,12 +17,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 public class MenuItemSearchService {
 
     @Autowired
     private ElasticsearchClient elasticsearchClient;
+
+    @Autowired
+    private MenuItemSearchRepository menuItemSearchRepository;
 
     public Page<MenuItemDocument> searchMenuItems(SearchRequestDto dto, Pageable pageable) throws IOException {
         int from = (int) pageable.getOffset();
@@ -123,6 +128,13 @@ public class MenuItemSearchService {
         long totalHits = response.hits().total() != null ? response.hits().total().value() : 0;
 
         return new PageImpl<>(menuItems, pageable, totalHits);
+    }
+
+    public List<MenuItemDocument> getAllMenuItems() throws IOException {
+        Iterable<MenuItemDocument> menuItemDocuments = menuItemSearchRepository.findAll();
+        return StreamSupport.stream(
+                        menuItemSearchRepository.findAll().spliterator(), false)
+                .toList();
     }
 }
 
