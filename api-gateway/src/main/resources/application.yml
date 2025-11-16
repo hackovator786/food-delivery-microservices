@@ -129,6 +129,23 @@ spring:
                 durationInSeconds: 60
             - RewritePath=/(?<segment>search/.*), /api/v1.0/${segment}
 
+        - id: cart-service
+          uri: lb://CART-SERVICE
+          predicates:
+            - Path=/cart/**
+          filters:
+            - name: RedisRateLimiter
+              args:
+                routeId: cart-service
+                maxRequests: 10
+                durationInSeconds: 60
+            - name: AuthFilter
+              args:
+                roles:
+                  - ROLE_CUSTOMER
+                  - ROLE_ADMIN
+            - RewritePath=/(?<segment>cart/.*), /api/v1.0/${segment}
+
 #Eureka Client Configuration
 eureka:
   client:

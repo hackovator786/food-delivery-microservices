@@ -18,7 +18,6 @@ import java.util.List;
 @Table(
         name = "cart",
         uniqueConstraints = {
-                @UniqueConstraint(name = "unique_cart_id", columnNames = {"cart_id"}),
                 @UniqueConstraint(name = "unique_user_id", columnNames = {"user_id"})
         }
 )
@@ -26,20 +25,15 @@ public class Cart extends BaseModel{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @NotBlank
-    private String cartId;
+    private Long cartId;
 
     @NotBlank
     private String userId;
 
+    private String restaurantId;
+
     @OneToMany(mappedBy = "cart", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CartItem> items;
-
-    @Min(value = 0)
-    private Double totalPrice = 0.0;
-
 
     @PrePersist
     public void prePersist() {

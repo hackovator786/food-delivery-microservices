@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 public class CartItem extends BaseModel{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long cartItemId;
 
     @NotBlank
     private String menuItemId;
@@ -25,8 +25,7 @@ public class CartItem extends BaseModel{
     @Min(value = 1)
     private Integer quantity;
 
-    @Min(value = 0)
-    private Double price;
+    private String notes;
 
     @ManyToOne
     @JoinColumn(name = "cart_id")

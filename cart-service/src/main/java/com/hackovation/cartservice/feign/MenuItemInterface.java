@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "MENU-SERVICE", configuration = FeignConfig.class)
+@FeignClient(name = "MENU-SERVICE", configuration = FeignConfig.class, path = "/api/v1.0/internal")
 public interface MenuItemInterface {
 
 }

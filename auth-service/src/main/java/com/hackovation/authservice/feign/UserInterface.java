@@ -8,10 +8,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "USER-SERVICE", configuration = FeignConfig.class)
+@FeignClient(name = "USER-SERVICE", configuration = FeignConfig.class, path = "/api/v1.0/internal")
 public interface UserInterface {
-    @PostMapping("/api/v1.0/internal/user/create")
+    @PostMapping("/user/create")
     public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest userRequest);
-    @PutMapping("/api/v1.0/internal/user/update")
+    @PutMapping("/user/update")
     public ResponseEntity<?> updateUser(@Valid @RequestBody UserRequest userRequest);
 }
