@@ -44,6 +44,9 @@ public class CartService {
 
         Optional<Cart> optionalCart = cartRepository.findByUserId(userId);
         if(optionalCart.isEmpty()) {
+            if(!increase) {
+                throw new ApiException("Cart does not exist");
+            }
             Cart cart = new Cart(userId, restaurantId);
             MenuItemDetailsResponse menuItemDetailsResponse = getMenuItemDetails(restaurantId, menuItemId);
             CartItem cartItem = CartItem.builder()
