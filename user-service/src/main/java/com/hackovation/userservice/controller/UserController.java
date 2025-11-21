@@ -19,7 +19,6 @@ public class UserController {
 
     @PostMapping("/internal/user/create")
     public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest userRequest) throws RegException, ApiException {
-        System.out.println(userRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(userRequest));
     }
 

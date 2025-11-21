@@ -137,7 +137,7 @@ spring:
             - name: RedisRateLimiter
               args:
                 routeId: cart-service
-                maxRequests: 10
+                maxRequests: 40
                 durationInSeconds: 60
             - name: AuthFilter
               args:

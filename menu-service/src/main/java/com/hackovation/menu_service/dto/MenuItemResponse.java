@@ -13,7 +13,7 @@ import java.util.Set;
 @Builder
 public class MenuItemResponse {
     private String menuItemId;
-//    private String restaurantId;
+    private String restaurantId;
     private String name;
     private String description;
     private Double price;

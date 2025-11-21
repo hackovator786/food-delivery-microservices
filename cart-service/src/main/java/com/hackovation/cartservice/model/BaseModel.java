@@ -1,33 +1,34 @@
 package com.hackovation.cartservice.model;
 
-import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-@MappedSuperclass
 @Data
 public abstract class BaseModel {
 
     @NotNull
+    @Field("created_at")
     private Long createdAt;
 
     @NotNull
+    @Field("created_time_zone")
     private String createdTimeZone;
 
     @NotNull
+    @Field("updated_at")
     private Long updatedAt;
 
     @NotNull
+    @Field("updated_time_zone")
     private String updatedTimeZone;
 
-    @PrePersist
-    public void prePersist() {
+
+    public void beforeConvert() {
         long now = Instant.now().toEpochMilli();
         String zone = ZoneId.systemDefault().getId();
 
@@ -37,8 +38,7 @@ public abstract class BaseModel {
         this.updatedTimeZone = zone;
     }
 
-    @PreUpdate
-    public void preUpdate() {
+    public void beforeSave() {
         this.updatedAt = Instant.now().toEpochMilli();
         this.updatedTimeZone = ZoneId.systemDefault().getId();
     }

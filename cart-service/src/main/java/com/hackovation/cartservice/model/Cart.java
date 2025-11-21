@@ -1,47 +1,42 @@
 package com.hackovation.cartservice.model;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
-@Table(
-        name = "cart",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "unique_user_id", columnNames = {"user_id"})
-        }
-)
+@Document(collection = "cart")
 public class Cart extends BaseModel{
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long cartId;
 
-    @NotBlank
+    @Id
+    @Field("user_id")
     private String userId;
 
+    @NotBlank
+    @Field("restaurant_id")
     private String restaurantId;
 
-    @OneToMany(mappedBy = "cart", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @Min(value = 1)
+    @Field("total_amount")
+    private Double totalAmount;
+
+    @Field("items")
     private List<CartItem> items;
 
-    @PrePersist
-    public void prePersist() {
-        super.prePersist();
+    public Cart(String userId, String restaurantId) {
+        this.userId = userId;
+        this.restaurantId = restaurantId;
     }
 
-    @PreUpdate
-    public void preUpdate() {
-        super.preUpdate();
-    }
 }
