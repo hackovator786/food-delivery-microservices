@@ -125,7 +125,7 @@ spring:
             - name: RedisRateLimiter
               args:
                 routeId: search-service
-                maxRequests: 5
+                maxRequests: 50
                 durationInSeconds: 60
             - RewritePath=/(?<segment>search/.*), /api/v1.0/${segment}
 
