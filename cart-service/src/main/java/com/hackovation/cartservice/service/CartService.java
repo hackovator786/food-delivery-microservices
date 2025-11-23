@@ -40,7 +40,7 @@ public class CartService {
     }
 
     @Transactional(rollbackFor = {Exception.class})
-    public CartResponse updateCart(String userId, String restaurantId, String menuItemId, Boolean increase) throws Exception {
+    public Integer updateCart(String userId, String restaurantId, String menuItemId, Boolean increase) throws Exception {
 
         Optional<Cart> optionalCart = cartRepository.findByUserId(userId);
         if(optionalCart.isEmpty()) {
@@ -57,7 +57,7 @@ public class CartService {
                     .build();
             cart.setItems(List.of(cartItem));
             cart.setTotalAmount(cartItem.getUnitPrice());
-            return convertCartToCartResponse(cartRepository.save(cart));
+            return cartRepository.save(cart).getItems().size();
         }
 
         Cart cart = optionalCart.get();
@@ -81,14 +81,14 @@ public class CartService {
                     .build();
             cart.getItems().add(cartItem);
             cart.setTotalAmount(cart.getTotalAmount() + cartItem.getUnitPrice());
-            return convertCartToCartResponse(cartRepository.save(cart));
+            return cartRepository.save(cart).getItems().size();
         }
 
         if(increase) {
             CartItem cartItem = cart.getItems().stream().filter(item -> item.getMenuItemId().equals(menuItemId)).findFirst().get();
             cartItem.setQuantity(cartItem.getQuantity() + 1);
             cart.setTotalAmount(cart.getTotalAmount() + cartItem.getUnitPrice());
-            return convertCartToCartResponse(cartRepository.save(cart));
+            return cartRepository.save(cart).getItems().size();
         }
 
         CartItem cartItem = cart.getItems().stream().filter(item -> item.getMenuItemId().equals(menuItemId)).findFirst().get();
@@ -103,7 +103,7 @@ public class CartService {
             return null;
         }
 
-        return convertCartToCartResponse(cartRepository.save(cart));
+        return cartRepository.save(cart).getItems().size();
     }
 
     public Boolean deleteCart(String userId) {

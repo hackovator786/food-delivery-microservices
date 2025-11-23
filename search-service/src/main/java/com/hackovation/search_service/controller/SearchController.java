@@ -1,5 +1,6 @@
 package com.hackovation.search_service.controller;
 
+import com.hackovation.search_service.dto.MenuItemResponse;
 import com.hackovation.search_service.dto.SearchRequestDto;
 import com.hackovation.search_service.model.MenuItemDocument;
 import com.hackovation.search_service.model.RestaurantDocument;
@@ -24,7 +25,7 @@ public class SearchController {
     private RestaurantService restaurantService;
 
     @GetMapping("/item")
-    public Page<MenuItemDocument> searchMenuItems(
+    public Page<MenuItemResponse> searchMenuItems(
             @RequestParam(value = "menu-item-id", required = false) String menuItemId,
             @RequestParam(value = "query", required = false) String query,
             @RequestParam(value = "restaurant-id", required = false) String restaurantId,
@@ -50,7 +51,7 @@ public class SearchController {
     }
 
     @GetMapping("/all-items")
-    public List<MenuItemDocument> getAllMenuItems() throws IOException {
+    public List<MenuItemResponse> getAllMenuItems() throws IOException {
         return menuItemService.getAllMenuItems();
     }
 

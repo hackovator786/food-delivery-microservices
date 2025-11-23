@@ -1,5 +1,6 @@
 package com.hackovation.search_service.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,9 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 public class RestaurantDocument {
 
     @Id
+    @JsonIgnore
+    private String id;
+
     @Field(type = FieldType.Keyword)
     private String restaurantId;
 

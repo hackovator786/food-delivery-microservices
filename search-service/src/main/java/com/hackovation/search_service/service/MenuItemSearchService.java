@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import com.hackovation.search_service.dto.MenuItemResponse;
 import com.hackovation.search_service.dto.SearchRequestDto;
 import com.hackovation.search_service.model.MenuItemDocument;
 import com.hackovation.search_service.repository.MenuItemSearchRepository;
@@ -28,7 +29,7 @@ public class MenuItemSearchService {
     @Autowired
     private MenuItemSearchRepository menuItemSearchRepository;
 
-    public Page<MenuItemDocument> searchMenuItems(SearchRequestDto dto, Pageable pageable) throws IOException {
+    public Page<MenuItemResponse> searchMenuItems(SearchRequestDto dto, Pageable pageable) throws IOException {
         int from = (int) pageable.getOffset();
         int size = pageable.getPageSize();
 
@@ -121,20 +122,31 @@ public class MenuItemSearchService {
 
         SearchResponse<MenuItemDocument> response = elasticsearchClient.search(searchRequest, MenuItemDocument.class);
 
-        List<MenuItemDocument> menuItems = response.hits().hits().stream()
+        List<MenuItemResponse> menuItems = response.hits().hits().stream()
                 .map(hit -> hit.source())
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()).stream().map(this::convertToMenuItemResponse).collect(Collectors.toList());
 
         long totalHits = response.hits().total() != null ? response.hits().total().value() : 0;
 
         return new PageImpl<>(menuItems, pageable, totalHits);
     }
 
-    public List<MenuItemDocument> getAllMenuItems() throws IOException {
-        Iterable<MenuItemDocument> menuItemDocuments = menuItemSearchRepository.findAll();
+    public List<MenuItemResponse> getAllMenuItems() throws IOException {
         return StreamSupport.stream(
                         menuItemSearchRepository.findAll().spliterator(), false)
-                .toList();
+                .toList().stream().map(this::convertToMenuItemResponse).collect(Collectors.toList());
+    }
+
+    private MenuItemResponse convertToMenuItemResponse(MenuItemDocument doc) {
+        return MenuItemResponse.builder()
+                .menuItemId(doc.getMenuItemId())
+                .restaurantId(doc.getRestaurantId())
+                .menuItemName(doc.getMenuItemName())
+                .description(doc.getDescription())
+                .price(doc.getPrice())
+                .isAvailable(doc.getIsAvailable())
+                .imageUrl(doc.getImageUrl())
+                .build();
     }
 }
 
