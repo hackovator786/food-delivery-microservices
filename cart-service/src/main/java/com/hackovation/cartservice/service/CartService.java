@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,8 +40,21 @@ public class CartService {
         return null;
     }
 
+    public Map<String, Integer> getCartItemsAndQuantity(String userId, String restaurantId) {
+        Map<String, Integer> menuItemIdQtyMap = new HashMap<>();
+        Optional<Cart> optionalCart = cartRepository.findByUserId(userId);
+        if(optionalCart.isPresent()) {
+            Cart cart = optionalCart.get();
+            if(!cart.getRestaurantId().equals(restaurantId)) {
+                return menuItemIdQtyMap;
+            }
+            cart.getItems().forEach(item -> menuItemIdQtyMap.put(item.getMenuItemId(), item.getQuantity()));
+        }
+        return menuItemIdQtyMap;
+    }
+
     @Transactional(rollbackFor = {Exception.class})
-    public Integer updateCart(String userId, String restaurantId, String menuItemId, Boolean increase) throws Exception {
+    public CartItemQtyResponse updateCart(String userId, String restaurantId, String menuItemId, Boolean increase) throws Exception {
 
         Optional<Cart> optionalCart = cartRepository.findByUserId(userId);
         if(optionalCart.isEmpty()) {
@@ -57,7 +71,7 @@ public class CartService {
                     .build();
             cart.setItems(List.of(cartItem));
             cart.setTotalAmount(cartItem.getUnitPrice());
-            return cartRepository.save(cart).getItems().size();
+            return convertCartToCartItemQtyResponse(cartRepository.save(cart));
         }
 
         Cart cart = optionalCart.get();
@@ -81,14 +95,14 @@ public class CartService {
                     .build();
             cart.getItems().add(cartItem);
             cart.setTotalAmount(cart.getTotalAmount() + cartItem.getUnitPrice());
-            return cartRepository.save(cart).getItems().size();
+            return convertCartToCartItemQtyResponse(cartRepository.save(cart));
         }
 
         if(increase) {
             CartItem cartItem = cart.getItems().stream().filter(item -> item.getMenuItemId().equals(menuItemId)).findFirst().get();
             cartItem.setQuantity(cartItem.getQuantity() + 1);
             cart.setTotalAmount(cart.getTotalAmount() + cartItem.getUnitPrice());
-            return cartRepository.save(cart).getItems().size();
+            return convertCartToCartItemQtyResponse(cartRepository.save(cart));
         }
 
         CartItem cartItem = cart.getItems().stream().filter(item -> item.getMenuItemId().equals(menuItemId)).findFirst().get();
@@ -103,7 +117,7 @@ public class CartService {
             return null;
         }
 
-        return cartRepository.save(cart).getItems().size();
+        return convertCartToCartItemQtyResponse(cartRepository.save(cart));
     }
 
     public Boolean deleteCart(String userId) {
@@ -151,5 +165,14 @@ public class CartService {
         cartItemResponse.setUnitPrice(cartItem.getUnitPrice());
         cartItemResponse.setNotes(cartItem.getNotes());
         return cartItemResponse;
+    }
+
+    private CartItemQtyResponse convertCartToCartItemQtyResponse(Cart cart){
+        CartItemQtyResponse cartItemQtyResponse = new CartItemQtyResponse();
+        cartItemQtyResponse.setRestaurantId(cart.getRestaurantId());
+        Map<String, Integer> menuItemIdQtyMap = new HashMap<>();
+        cart.getItems().forEach(item -> menuItemIdQtyMap.put(item.getMenuItemId(), item.getQuantity()));
+        cartItemQtyResponse.setItems(menuItemIdQtyMap);
+        return cartItemQtyResponse;
     }
 }

@@ -20,17 +20,17 @@ public class CartController {
 
     @PostMapping("/add")
     public ResponseEntity<?> addItemToCart(@RequestHeader("loggedInUser") String userId, @Valid @RequestBody AddItemRequest addItemRequest) throws Exception {
-        return new ResponseEntity<>(Map.of("cartItemsCount" , cartService.updateCart(userId,
-                addItemRequest.getRestaurantId(), addItemRequest.getMenuItemId(), true)),
+        return new ResponseEntity<>(cartService.updateCart(userId,
+                addItemRequest.getRestaurantId(), addItemRequest.getMenuItemId(), true),
                 HttpStatus.CREATED);
     }
 
     @PutMapping("/update")
     public ResponseEntity<?> updateCart(@RequestHeader("loggedInUser") String userId, @Valid @RequestBody UpdateItemRequest updateItemRequest) throws Exception {
-        return new ResponseEntity<>(Map.of("cartItemsCount", cartService.updateCart(userId,
+        return new ResponseEntity<>(cartService.updateCart(userId,
                 updateItemRequest.getRestaurantId(), updateItemRequest.getMenuItemId(),
-                updateItemRequest.getIncrease())),
-                HttpStatus.CREATED);
+                updateItemRequest.getIncrease()),
+                HttpStatus.OK);
     }
 
     @GetMapping("/get-items")
@@ -38,10 +38,15 @@ public class CartController {
         return ResponseEntity.ok(cartService.getCartItems(userId));
     }
 
+    @GetMapping("/get-items-quantity")
+    public ResponseEntity<?> getCartItemQuantity(@RequestHeader("loggedInUser") String userId, @RequestParam("restaurant-id") String restaurantId) {
+        return ResponseEntity.ok(cartService.getCartItemsAndQuantity(userId, restaurantId));
+    }
+
     // TODO - Query to be optimized for this API
     @GetMapping("/get-items-count")
     public ResponseEntity<?> getCartItemsCount(@RequestHeader("loggedInUser") String userId) {
-        return ResponseEntity.ok(Map.of("cartItemsCount", cartService.getCartItems(userId).getItems().size()));
+        return ResponseEntity.ok(Map.of("cartItemsCount", cartService.getCartItems(userId) != null ? cartService.getCartItems(userId).getItems().size() : 0));
     }
 
 }
