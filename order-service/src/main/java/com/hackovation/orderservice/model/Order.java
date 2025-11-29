@@ -26,6 +26,6 @@ public class Order {
     private Address address;
     private Long deliveryTime;
     private OrderStatus orderStatus;
-    private String paymentId;
+    private String transactionId;
     private String userId;
 }

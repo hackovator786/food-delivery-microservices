@@ -1,7 +1,12 @@
 package com.hackovation.paymentservice.repository;
 
 import com.hackovation.paymentservice.model.Payment;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface PaymentRepository extends MongoRepository<Payment, String> {
+import java.util.Optional;
+
+@Repository
+public interface PaymentRepository extends JpaRepository<Payment, Long> {
+    Optional<Payment> findByOrderIdAndRazorpayOrderId(String orderId, String razorpayOrderId);
 }

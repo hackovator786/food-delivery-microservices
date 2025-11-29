@@ -146,6 +146,18 @@ spring:
                   - ROLE_ADMIN
             - RewritePath=/(?<segment>cart/.*), /api/v1.0/${segment}
 
+        - id: payment-service
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/payment/**
+          filters:
+            - name: RedisRateLimiter
+              args:
+                routeId: payment-service
+                maxRequests: 40
+                durationInSeconds: 60
+
+            - RewritePath=/(?<segment>payment/.*), /api/v1.0/${segment}
 #Eureka Client Configuration
 eureka:
   client:
