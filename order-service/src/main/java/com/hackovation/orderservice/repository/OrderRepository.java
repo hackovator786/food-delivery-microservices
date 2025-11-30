@@ -1,7 +1,10 @@
 package com.hackovation.orderservice.repository;
 
 import com.hackovation.orderservice.model.Order;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface OrderRepository extends MongoRepository<Order, String> {
+import java.util.Optional;
+
+public interface OrderRepository extends JpaRepository<Order, Long> {
+    Optional<Order> findByOrderId(String orderId);
 }

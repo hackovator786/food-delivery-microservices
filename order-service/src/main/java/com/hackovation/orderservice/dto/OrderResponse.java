@@ -1,6 +1,5 @@
 package com.hackovation.orderservice.dto;
 
-import com.hackovation.orderservice.model.Address;
 import com.hackovation.orderservice.model.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

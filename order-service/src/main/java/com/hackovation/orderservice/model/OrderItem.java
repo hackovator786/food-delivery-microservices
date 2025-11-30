@@ -1,15 +1,44 @@
 package com.hackovation.orderservice.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import org.springframework.data.mongodb.core.mapping.Document;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Document
+@Entity
+@Table(name = "order_items")
 public class OrderItem {
-    private String name;
-    private Integer price;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false, foreignKey = @ForeignKey(name = "fk_order_item_order"))
+    private Order order;
+
+    @NotBlank(message = "Menu Item Id cannot be blank")
+    private String menuItemId;
+
+    @NotBlank(message = "Item Name cannot be blank")
+    private String itemName;
+
+    @NotNull(message = "Quantity cannot be null")
     private Integer quantity;
-    private String foodItemId;
+
+    @NotNull(message = "Unit Price cannot be null")
+    private BigDecimal unitPriceSnapshot;
+
+    private String notes;
 }

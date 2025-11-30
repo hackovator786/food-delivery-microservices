@@ -1,28 +1,20 @@
 package com.hackovation.orderservice;
 
+import com.hackovation.orderservice.feign.CartInterface;
+import com.hackovation.orderservice.feign.PaymentInterface;
 import com.hackovation.orderservice.service.OrderService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.kafka.annotation.KafkaListener;
-
-import java.util.List;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
-@Slf4j
+@EnableDiscoveryClient
+@EnableFeignClients(basePackageClasses = {CartInterface.class, PaymentInterface.class})
 public class OrderServiceApplication {
-
-    @Autowired
-    private OrderService orderService;
 
     public static void main(String[] args) {
         SpringApplication.run(OrderServiceApplication.class, args);
-    }
-
-    @KafkaListener(topics = "payment-notification-topic")
-    public void receivePaymentNotification(List<String> paymentInfo) {
-        log.info("Received payment notification for order id: {}.", paymentInfo.get(1));
-        orderService.updateOrderAfterPayment(paymentInfo);
     }
 }

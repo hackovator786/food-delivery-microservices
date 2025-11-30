@@ -121,7 +121,12 @@ public class CartService {
     }
 
     public Boolean deleteCart(String userId) {
-        return null;
+        try {
+            cartRepository.deleteByUserId(userId);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private MenuItemDetailsResponse getMenuItemDetails(String restaurantId, String menuItemId) throws Exception {
