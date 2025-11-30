@@ -18,7 +18,6 @@ import java.util.List;
 @Document(collection = "cart")
 public class Cart extends BaseModel{
 
-
     @Id
     @Field("user_id")
     private String userId;
@@ -28,8 +27,8 @@ public class Cart extends BaseModel{
     private String restaurantId;
 
     @Min(value = 1)
-    @Field("total_amount")
-    private Double totalAmount;
+    @Field("sub_total")
+    private Double subTotal;
 
     @Field("items")
     private List<CartItem> items;

@@ -11,7 +11,4 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface CartInterface {
     @GetMapping("/get-items")
     public ResponseEntity<?> getItemsInCart(@RequestParam("user-id") String userId);
-
-    @DeleteMapping("/delete-cart/user/{userId}")
-    public ResponseEntity<?> deleteCart(@PathVariable("userId") String userId);
 }

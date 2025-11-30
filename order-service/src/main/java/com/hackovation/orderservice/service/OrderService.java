@@ -26,7 +26,7 @@ public class OrderService {
 
     private final KafkaTemplate<String, OrderPlacedNotification> kafkaTemplate;
 
-    public OrderResponse createOrder(Order order) {
+    public OrderResponse createOrder(String userId, Order order) {
         // Get the items from the cart
 
         return null;
@@ -36,6 +36,8 @@ public class OrderService {
         // TODO
         return;
     }
+
+
 
     private void sendNotificationToRestaurant(Order order) {
         // Send a notification to Restaurant Service to prepare this order

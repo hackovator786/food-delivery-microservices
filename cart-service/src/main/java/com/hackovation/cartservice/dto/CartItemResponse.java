@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CartItemResponse {
     private String menuItemId;
-    private String name;
+    private String itemName;
     private Integer quantity;
     private Double unitPrice;
     private String notes;

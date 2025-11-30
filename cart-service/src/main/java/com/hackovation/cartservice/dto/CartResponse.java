@@ -13,6 +13,6 @@ import java.util.List;
 @Builder
 public class CartResponse {
     private String restaurantId;
-    private Double totalAmount;
+    private Double subTotal;
     private List<CartItemResponse> items;
 }

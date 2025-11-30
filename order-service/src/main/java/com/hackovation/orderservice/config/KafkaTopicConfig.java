@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 public class KafkaTopicConfig {
 
     @Getter
-    @Value("${spring.kafka.group-id}")
+    @Value("${spring.kafka.order-group-id}")
     private String groupId;
 
     @Bean

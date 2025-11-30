@@ -23,9 +23,4 @@ public class CartControllerInternal {
         return ResponseEntity.ok(cartService.getCartItems(userId));
     }
 
-    @DeleteMapping("/delete-cart/user/{userId}")
-    public ResponseEntity<?> deleteCart(@PathVariable("userId") String userId){
-        return ResponseEntity.ok(Map.of("deleted",cartService.deleteCart(userId)));
-    }
-
 }

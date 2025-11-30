@@ -33,9 +33,12 @@ public class CartService {
 
     public CartResponse getCartItems(String userId) {
 
-        // Check for updated prices from menu-service
-        if(cartRepository.findByUserId(userId).isPresent())
+        // TODO -Check for updated prices from menu-service
+
+
+        if(cartRepository.findByUserId(userId).isPresent()) {
             return convertCartToCartResponse(cartRepository.findByUserId(userId).get());
+        }
 
         return null;
     }
@@ -70,7 +73,7 @@ public class CartService {
                     .unitPrice(menuItemDetailsResponse.getMenuItemPrice())
                     .build();
             cart.setItems(List.of(cartItem));
-            cart.setTotalAmount(cartItem.getUnitPrice());
+            cart.setSubTotal(cartItem.getUnitPrice());
             return convertCartToCartItemQtyResponse(cartRepository.save(cart));
         }
 
@@ -94,20 +97,20 @@ public class CartService {
                     .unitPrice(menuItemDetailsResponse.getMenuItemPrice())
                     .build();
             cart.getItems().add(cartItem);
-            cart.setTotalAmount(cart.getTotalAmount() + cartItem.getUnitPrice());
+            cart.setSubTotal(cart.getSubTotal() + cartItem.getUnitPrice());
             return convertCartToCartItemQtyResponse(cartRepository.save(cart));
         }
 
         if(increase) {
             CartItem cartItem = cart.getItems().stream().filter(item -> item.getMenuItemId().equals(menuItemId)).findFirst().get();
             cartItem.setQuantity(cartItem.getQuantity() + 1);
-            cart.setTotalAmount(cart.getTotalAmount() + cartItem.getUnitPrice());
+            cart.setSubTotal(cart.getSubTotal() + cartItem.getUnitPrice());
             return convertCartToCartItemQtyResponse(cartRepository.save(cart));
         }
 
         CartItem cartItem = cart.getItems().stream().filter(item -> item.getMenuItemId().equals(menuItemId)).findFirst().get();
         cartItem.setQuantity(cartItem.getQuantity() - 1);
-        cart.setTotalAmount(cart.getTotalAmount() - cartItem.getUnitPrice());
+        cart.setSubTotal(cart.getSubTotal() - cartItem.getUnitPrice());
         if(cartItem.getQuantity() == 0) {
             cart.getItems().remove(cartItem);
         }
@@ -157,7 +160,7 @@ public class CartService {
     private CartResponse convertCartToCartResponse(Cart cart) {
         CartResponse cartResponse = new CartResponse();
         cartResponse.setRestaurantId(cart.getRestaurantId());
-        cartResponse.setTotalAmount(cart.getTotalAmount());
+        cartResponse.setSubTotal(cart.getSubTotal());
         cartResponse.setItems(cart.getItems().stream().map(this::convertCartItemToCartItemResponse).toList());
         return cartResponse;
     }
@@ -165,7 +168,7 @@ public class CartService {
     private CartItemResponse convertCartItemToCartItemResponse(CartItem cartItem) {
         CartItemResponse cartItemResponse = new CartItemResponse();
         cartItemResponse.setMenuItemId(cartItem.getMenuItemId());
-        cartItemResponse.setName(cartItem.getName());
+        cartItemResponse.setItemName(cartItem.getName());
         cartItemResponse.setQuantity(cartItem.getQuantity());
         cartItemResponse.setUnitPrice(cartItem.getUnitPrice());
         cartItemResponse.setNotes(cartItem.getNotes());
