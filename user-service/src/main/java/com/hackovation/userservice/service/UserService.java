@@ -2,13 +2,10 @@ package com.hackovation.userservice.service;
 
 import com.hackovation.userservice.dto.request.UserRequest;
 import com.hackovation.userservice.dto.response.UserResponse;
-import com.hackovation.userservice.model.User;
-import com.hackovation.userservice.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.Optional;
+import com.hackovation.userservice.exception.ApiException;
+import com.hackovation.userservice.exception.RegException;
 
 public interface UserService {
-
+    public UserResponse createUser(UserRequest userRequest) throws RegException, ApiException;
+    public UserResponse updateUser(UserRequest userRequest) throws ApiException;
 }

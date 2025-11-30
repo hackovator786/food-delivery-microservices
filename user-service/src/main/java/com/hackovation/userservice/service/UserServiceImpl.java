@@ -1,19 +1,23 @@
 package com.hackovation.userservice.service;
 
+import com.hackovation.userservice.dto.request.AddressRequest;
 import com.hackovation.userservice.dto.request.UserRequest;
+import com.hackovation.userservice.dto.response.AddressResponse;
 import com.hackovation.userservice.dto.response.UserResponse;
 import com.hackovation.userservice.exception.ApiException;
 import com.hackovation.userservice.exception.RegException;
+import com.hackovation.userservice.model.Address;
 import com.hackovation.userservice.model.User;
 import com.hackovation.userservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-public class UserServiceImpl {
+public class UserServiceImpl implements UserService{
     @Autowired
     private UserRepository userRepository;
 
@@ -41,6 +45,7 @@ public class UserServiceImpl {
         return mapUserToUserResponse(user);
     }
 
+    @Transactional(rollbackFor = {Exception.class})
     public UserResponse updateUser(UserRequest userRequest) throws ApiException {
         User user = userRepository.findByUserId(userRequest.getUserId()).orElseThrow(() -> new ApiException("User not found"));
 
