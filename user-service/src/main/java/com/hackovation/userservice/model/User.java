@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -46,6 +47,8 @@ public class User extends BaseModel {
 
     private Long phoneNumber;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(
             mappedBy = "user",
             cascade = CascadeType.ALL,

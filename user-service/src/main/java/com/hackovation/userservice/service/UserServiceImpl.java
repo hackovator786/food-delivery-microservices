@@ -21,6 +21,7 @@ public class UserServiceImpl implements UserService{
     @Autowired
     private UserRepository userRepository;
 
+    @Override
     @Transactional(rollbackFor = {Exception.class})
     public UserResponse createUser(UserRequest userRequest) throws RegException, ApiException {
         if(userRepository.existsByUserId(userRequest.getUserId())) {
@@ -40,11 +41,13 @@ public class UserServiceImpl implements UserService{
         return mapUserToUserResponse(saveduser);
     }
 
+    @Override
     public UserResponse getUser(String userId) throws ApiException {
         User user = userRepository.findByUserId(userId).orElseThrow(() -> new ApiException("User not found"));
         return mapUserToUserResponse(user);
     }
 
+    @Override
     @Transactional(rollbackFor = {Exception.class})
     public UserResponse updateUser(UserRequest userRequest) throws ApiException {
         User user = userRepository.findByUserId(userRequest.getUserId()).orElseThrow(() -> new ApiException("User not found"));

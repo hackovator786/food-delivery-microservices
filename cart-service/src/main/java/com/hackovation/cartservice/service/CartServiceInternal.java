@@ -1,6 +1,7 @@
 package com.hackovation.cartservice.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hackovation.cartservice.dto.CartItemResponse;
 import com.hackovation.cartservice.dto.CartResponseInternal;
 import com.hackovation.cartservice.exception.ApiException;
 import com.hackovation.cartservice.model.Cart;
@@ -34,7 +35,7 @@ public class CartServiceInternal {
         CartResponseInternal cartResponse = new CartResponseInternal();
         cartResponse.setRestaurantId(cart.getRestaurantId());
         cartResponse.setSubTotal(cart.getSubTotal());
-        cartResponse.setItems(cart.getItems().stream().map(item -> objectMapper.convertValue(item, com.hackovation.cartservice.dto.CartItemResponse.class)).toList());
+        cartResponse.setItems(cart.getItems().stream().map(item -> objectMapper.convertValue(item, CartItemResponse.class)).toList());
         cartResponse.setTotalAmount(calculateTotalAmount(cart));
         cartResponse.setTax(calculateTax(cart.getSubTotal()));
         cartResponse.setDiscount(calculateDiscount(cart.getSubTotal()));

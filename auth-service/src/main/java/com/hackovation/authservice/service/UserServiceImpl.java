@@ -153,7 +153,7 @@ public class UserServiceImpl implements UserService {
                 userRepository.save(user);
 
                 // Create user in user service
-                ResponseEntity<?> response = response = userInterface.createUser(
+                ResponseEntity<?> response = userInterface.createUser(
                         UserRequest
                                 .builder()
                                 .userId(userId)

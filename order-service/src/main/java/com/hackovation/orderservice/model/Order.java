@@ -3,14 +3,12 @@ package com.hackovation.orderservice.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Builder
 @AllArgsConstructor
@@ -42,30 +40,32 @@ public class Order extends BaseModel{
     @NotBlank(message = "Restaurant Id cannot be blank")
     private String restaurantId;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @NotNull(message = "Order Items cannot be null")
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<OrderItem> orderItems;
 
     @NotNull(message = "Total Amount cannot be null")
-    private BigDecimal totalAmount;
+    private Double totalAmount;
 
     @NotNull(message = "Sub Total cannot be null")
-    private BigDecimal subTotal;
+    private Double subTotal;
 
     @NotNull(message = "Delivery Charge cannot be null")
-    private BigDecimal deliveryCharge;
+    private Double deliveryCharge;
 
     @NotNull(message = "Tax cannot be null")
-    private BigDecimal tax;
+    private Double tax;
 
     @NotNull(message = "Discount cannot be null")
-    private BigDecimal discount;
+    private Double discount;
 
     @NotNull(message = "Order Time cannot be null")
     private Long orderTime;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "address_id", nullable = false, foreignKey = @ForeignKey(name = "fk_address_user"))
+    @JoinColumn(name = "address_id", nullable = true, foreignKey = @ForeignKey(name = "fk_address_user"))
     private Address address;
 
     @NotNull(message = "Expected Delivery Time cannot be null")
@@ -80,4 +80,9 @@ public class Order extends BaseModel{
     private PaymentStatus paymentStatus;
 
     private String transactionId;
+
+    public void addOrderItem(OrderItem orderItem){
+        orderItems.add(orderItem);
+        orderItem.setOrder(this);
+    }
 }

@@ -8,11 +8,13 @@ import com.hackovation.userservice.model.User;
 import com.hackovation.userservice.repository.AddressRepository;
 import com.hackovation.userservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public class AddressServiceImpl implements AddressService{
 
     @Autowired
@@ -21,6 +23,7 @@ public class AddressServiceImpl implements AddressService{
     @Autowired
     private AddressRepository addressRepository;
 
+    @Override
     @Transactional(rollbackFor = {Exception.class})
     public AddressResponse addAddress(String userId, AddressRequest addressRequest) throws ApiException {
         try {
@@ -42,9 +45,10 @@ public class AddressServiceImpl implements AddressService{
         }
     }
 
+    @Override
     public List<AddressResponse> getAllAddresses(String userId) throws ApiException{
         try {
-            List<Address> addresses = addressRepository.findByUserId(userId);
+            List<Address> addresses = addressRepository.findByUserId(getIdByUserId(userId));
             return addresses.stream().map(this::mapAddressToAddressResponse).toList();
         } catch (Exception e) {
             e.printStackTrace();
@@ -52,6 +56,7 @@ public class AddressServiceImpl implements AddressService{
         }
     }
 
+    @Override
     public AddressResponse getAddressByUserIdAndAddressId(String userId, Long addressId) throws ApiException {
         try {
             Address address = getAddress(userId, addressId);
@@ -64,6 +69,8 @@ public class AddressServiceImpl implements AddressService{
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = {Exception.class})
     public AddressResponse updateAddress(String userId, Long addressId, AddressRequest addressRequest) throws ApiException {
         try {
             Address fetchedAddress = getAddress(userId, addressId);
@@ -86,10 +93,11 @@ public class AddressServiceImpl implements AddressService{
     }
 
     @Override
+    @Transactional(rollbackFor = {Exception.class})
     public void deleteAddress(String userId, Long addressId) throws Exception{
         try {
-            Boolean isDeleted = addressRepository.deleteByUserIdAndId(userId, addressId);
-            if(!isDeleted){
+            int isDeleted = addressRepository.deleteByUserIdAndId(getIdByUserId(userId), addressId);
+            if(isDeleted == 0){
                 throw new ApiException("Error deleting address");
             }
         } catch (ApiException e) {
@@ -102,7 +110,15 @@ public class AddressServiceImpl implements AddressService{
 
 
     private Address getAddress(String userId, Long addressId) throws ApiException {
-        return addressRepository.findByUserIdAndId(userId, addressId).orElseThrow(() -> new ApiException("Address not found"));
+        return addressRepository.findByUserIdAndId(getIdByUserId(userId), addressId).orElseThrow(() -> new ApiException("Address not found"));
+    }
+
+    private Long getIdByUserId(String userId) throws ApiException {
+        Long id = userRepository.getIdByUserId(userId);
+        if(id == null) {
+            throw new ApiException("User not found");
+        }
+        return id;
     }
 
     private Address mapAddressRequestToAddress(AddressRequest addressRequest) {

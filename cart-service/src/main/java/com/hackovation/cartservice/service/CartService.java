@@ -68,7 +68,7 @@ public class CartService {
             MenuItemDetailsResponse menuItemDetailsResponse = getMenuItemDetails(restaurantId, menuItemId);
             CartItem cartItem = CartItem.builder()
                     .menuItemId(menuItemId)
-                    .name(menuItemDetailsResponse.getMenuItemName())
+                    .itemName(menuItemDetailsResponse.getMenuItemName())
                     .quantity(1)
                     .unitPrice(menuItemDetailsResponse.getMenuItemPrice())
                     .build();
@@ -92,7 +92,7 @@ public class CartService {
             MenuItemDetailsResponse menuItemDetailsResponse = getMenuItemDetails(restaurantId, menuItemId);
             CartItem cartItem = CartItem.builder()
                     .menuItemId(menuItemId)
-                    .name(menuItemDetailsResponse.getMenuItemName())
+                    .itemName(menuItemDetailsResponse.getMenuItemName())
                     .quantity(1)
                     .unitPrice(menuItemDetailsResponse.getMenuItemPrice())
                     .build();
@@ -168,7 +168,7 @@ public class CartService {
     private CartItemResponse convertCartItemToCartItemResponse(CartItem cartItem) {
         CartItemResponse cartItemResponse = new CartItemResponse();
         cartItemResponse.setMenuItemId(cartItem.getMenuItemId());
-        cartItemResponse.setItemName(cartItem.getName());
+        cartItemResponse.setItemName(cartItem.getItemName());
         cartItemResponse.setQuantity(cartItem.getQuantity());
         cartItemResponse.setUnitPrice(cartItem.getUnitPrice());
         cartItemResponse.setNotes(cartItem.getNotes());

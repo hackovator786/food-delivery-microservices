@@ -146,6 +146,25 @@ spring:
                   - ROLE_ADMIN
             - RewritePath=/(?<segment>cart/.*), /api/v1.0/${segment}
 
+        - id: order-service
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/order/**
+          filters:
+            - name: RedisRateLimiter
+              args:
+                routeId: order-service
+                maxRequests: 40
+                durationInSeconds: 60
+            - name: AuthFilter
+              args:
+                roles:
+                  - ROLE_CUSTOMER
+                  - ROLE_ADMIN
+                  - ROLE_RESTAURANT_OWNER
+                  - ROLE_DELIVERY_AGENT
+            - RewritePath=/(?<segment>order/.*), /api/v1.0/${segment}
+
         - id: payment-service
           uri: lb://PAYMENT-SERVICE
           predicates:

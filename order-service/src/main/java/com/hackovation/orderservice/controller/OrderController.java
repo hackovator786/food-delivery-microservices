@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/v1/order")
+@RequestMapping("/order")
 @RequiredArgsConstructor
 public class OrderController {
 
@@ -20,8 +20,8 @@ public class OrderController {
     private OrderService orderService;
 
     @PostMapping("/create")
-    public ResponseEntity<?> placeOrder(@RequestHeader("loggedInUser") String userId, @Valid @RequestBody Order order) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(userId, order));
+    public ResponseEntity<?> placeOrder(@RequestHeader("loggedInUser") String userId) throws Exception {
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(userId));
     }
 
     @PutMapping("/status")

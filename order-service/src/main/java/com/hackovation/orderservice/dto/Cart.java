@@ -11,11 +11,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CartResponse {
+public class Cart {
     private String restaurantId;
     private Double subTotal;
     private Double totalAmount;
     private Double tax;
     private Double discount;
-    private List<CartItemResponse> items;
+    private List<CartItem> items;
 }

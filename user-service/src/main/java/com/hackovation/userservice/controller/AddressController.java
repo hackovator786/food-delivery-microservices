@@ -11,32 +11,32 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/address")
+@RequestMapping("/user/address")
 public class AddressController {
 
     private final AddressService addressService;
 
-    @PostMapping
+    @PostMapping("/add")
     public ResponseEntity<?> addAddress(@RequestHeader("loggedInUser") String userId, @Valid @RequestBody AddressRequest addressRequest) throws ApiException {
         return ResponseEntity.status(HttpStatus.CREATED).body(addressService.addAddress(userId,addressRequest));
     }
 
-    @GetMapping
+    @GetMapping("/get")
     public ResponseEntity<?> getAddresses(@RequestHeader("loggedInUser") String userId) throws ApiException {
         return ResponseEntity.ok().body(addressService.getAllAddresses(userId));
     }
 
-    @GetMapping("/{addressId}")
+    @GetMapping("/get/{addressId}")
     public ResponseEntity<?> getAddressById(@RequestHeader("loggedInUser") String userId, @PathVariable Long addressId) throws ApiException {
         return ResponseEntity.ok().body(addressService.getAddressByUserIdAndAddressId(userId,addressId));
     }
 
-    @PutMapping("/{addressId}")
+    @PutMapping("/update/{addressId}")
     public ResponseEntity<?> updateAddress(@RequestHeader("loggedInUser") String userId, @PathVariable Long addressId, @Valid @RequestBody AddressRequest addressRequest) throws ApiException {
         return ResponseEntity.ok().body(addressService.updateAddress(userId, addressId, addressRequest));
     }
 
-    @DeleteMapping("/{addressId}")
+    @DeleteMapping("/delete/{addressId}")
     public ResponseEntity<?> deleteAddress(@RequestHeader("loggedInUser") String userId, @PathVariable Long addressId) throws Exception {
         addressService.deleteAddress(userId, addressId);
         return ResponseEntity.status(HttpStatus.valueOf(204)).build();

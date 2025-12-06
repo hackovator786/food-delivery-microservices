@@ -20,7 +20,7 @@ public class CartItem {
 
     @NotBlank
     @Field("name")
-    private String name;
+    private String itemName;
 
     @Min(value = 1)
     @Field("quantity")
