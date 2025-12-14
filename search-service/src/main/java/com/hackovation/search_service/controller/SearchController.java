@@ -59,4 +59,9 @@ public class SearchController {
     public List<RestaurantDocument> getAllRestaurants() throws IOException {
         return restaurantService.getAllRestaurants();
     }
+
+    @GetMapping("/restaurant")
+    public RestaurantDocument getRestaurantById(@RequestParam("restaurant-id") String restaurantId) throws IOException {
+        return restaurantService.getRestaurantById(restaurantId);
+    }
 }

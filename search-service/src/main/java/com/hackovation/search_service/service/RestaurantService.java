@@ -23,4 +23,8 @@ public class RestaurantService {
                         restaurantRepository.findAll().spliterator(), false)
                 .toList();
     }
+
+    public RestaurantDocument getRestaurantById(String restaurantId) throws IOException {
+        return restaurantRepository.findByRestaurantId(restaurantId);
+    }
 }
