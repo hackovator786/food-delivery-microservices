@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class AddressResponse {
+    private Long id;
+    private String name;
     private String doorNumber;
     private String street;
     private String area;

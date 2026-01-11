@@ -14,6 +14,7 @@ import java.util.Optional;
 public interface AddressRepository extends JpaRepository<Address, Long> {
     List<Address> findByUserId(Long userId);
     Optional<Address> findByUserIdAndId(Long userId, Long id);
+    Optional<Address> findByUserIdAndName(Long userId, String name);
 
     @Modifying
     @Query("DELETE FROM Address a WHERE a.user.id = :userId AND a.id = :id")

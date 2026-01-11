@@ -161,6 +161,9 @@ public class CartService {
         CartResponse cartResponse = new CartResponse();
         cartResponse.setRestaurantId(cart.getRestaurantId());
         cartResponse.setSubTotal(cart.getSubTotal());
+        cartResponse.setTax(cartResponse.getSubTotal() * 0.05);
+        cartResponse.setTotal(cartResponse.getSubTotal() + cartResponse.getTax());
+        cartResponse.setNotes(cart.getNotes());
         cartResponse.setItems(cart.getItems().stream().map(this::convertCartItemToCartItemResponse).toList());
         return cartResponse;
     }
@@ -170,8 +173,7 @@ public class CartService {
         cartItemResponse.setMenuItemId(cartItem.getMenuItemId());
         cartItemResponse.setItemName(cartItem.getItemName());
         cartItemResponse.setQuantity(cartItem.getQuantity());
-        cartItemResponse.setUnitPrice(cartItem.getUnitPrice());
-        cartItemResponse.setNotes(cartItem.getNotes());
+        cartItemResponse.setLineItemTotal(cartItem.getUnitPrice() * cartItem.getQuantity());
         return cartItemResponse;
     }
 

@@ -30,12 +30,12 @@ public class AddressServiceImpl implements AddressService{
             Optional<User> optionalUser = userRepository.findByUserId(userId);
             if (optionalUser.isEmpty()) {
                 throw new ApiException("User not found");
-            } else {
-                User user = optionalUser.get();
-                user.addAddress(mapAddressRequestToAddress(addressRequest));
-                userRepository.save(user);
-                return mapAddressRequestToAddressResponse(addressRequest);
             }
+            User user = optionalUser.get();
+            user.addAddress(mapAddressRequestToAddress(addressRequest));
+            User savedUser = userRepository.save(user);
+            Address savedAddress = savedUser.getAddressByName(addressRequest.getName());
+            return mapAddressToAddressResponse(savedAddress);
         } catch (ApiException e) {
             e.printStackTrace();
             throw e;
@@ -71,15 +71,40 @@ public class AddressServiceImpl implements AddressService{
 
     @Override
     @Transactional(rollbackFor = {Exception.class})
-    public AddressResponse updateAddress(String userId, Long addressId, AddressRequest addressRequest) throws ApiException {
+    public AddressResponse updateAddressById(String userId, Long addressId, AddressRequest addressRequest) throws ApiException {
         try {
             Address fetchedAddress = getAddress(userId, addressId);
+            fetchedAddress.setName(addressRequest.getName());
             fetchedAddress.setDoorNumber(addressRequest.getDoorNumber());
             fetchedAddress.setStreet(addressRequest.getStreet());
             fetchedAddress.setArea(addressRequest.getArea());
             fetchedAddress.setCity(addressRequest.getCity());
             fetchedAddress.setState(addressRequest.getState());
             fetchedAddress.setCountry(addressRequest.getCountry());
+            fetchedAddress.setZipcode(addressRequest.getZipcode());
+            Address updatedAddress = addressRepository.save(fetchedAddress);
+            return mapAddressToAddressResponse(updatedAddress);
+        } catch (ApiException e) {
+            throw e;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    @Transactional(rollbackFor = {Exception.class})
+    @Override
+    public AddressResponse updateAddressByName(String userId, String name, AddressRequest addressRequest) throws ApiException {
+        try {
+            Address fetchedAddress = getAddressByName(userId, name);
+            fetchedAddress.setName(addressRequest.getName());
+            fetchedAddress.setDoorNumber(addressRequest.getDoorNumber());
+            fetchedAddress.setStreet(addressRequest.getStreet());
+            fetchedAddress.setArea(addressRequest.getArea());
+            fetchedAddress.setCity(addressRequest.getCity());
+            fetchedAddress.setState(addressRequest.getState());
+//            fetchedAddress.setCountry(addressRequest.getCountry());
             fetchedAddress.setZipcode(addressRequest.getZipcode());
             Address updatedAddress = addressRepository.save(fetchedAddress);
             return mapAddressToAddressResponse(updatedAddress);
@@ -113,6 +138,10 @@ public class AddressServiceImpl implements AddressService{
         return addressRepository.findByUserIdAndId(getIdByUserId(userId), addressId).orElseThrow(() -> new ApiException("Address not found"));
     }
 
+    private Address getAddressByName(String userId, String name) throws ApiException{
+        return addressRepository.findByUserIdAndName(getIdByUserId(userId), name).orElseThrow(() -> new ApiException("Address not found"));
+    }
+
     private Long getIdByUserId(String userId) throws ApiException {
         Long id = userRepository.getIdByUserId(userId);
         if(id == null) {
@@ -123,30 +152,21 @@ public class AddressServiceImpl implements AddressService{
 
     private Address mapAddressRequestToAddress(AddressRequest addressRequest) {
         return Address.builder()
+                .name(addressRequest.getName())
                 .doorNumber(addressRequest.getDoorNumber())
                 .street(addressRequest.getStreet())
                 .area(addressRequest.getArea())
                 .city(addressRequest.getCity())
                 .state(addressRequest.getState())
-                .country(addressRequest.getCountry())
+                .country("India")
                 .zipcode(addressRequest.getZipcode())
-                .build();
-    }
-
-    private AddressResponse mapAddressRequestToAddressResponse(AddressRequest address) {
-        return AddressResponse.builder()
-                .doorNumber(address.getDoorNumber())
-                .street(address.getStreet())
-                .area(address.getArea())
-                .city(address.getCity())
-                .state(address.getState())
-                .country(address.getCountry())
-                .zipcode(address.getZipcode())
                 .build();
     }
 
     private AddressResponse mapAddressToAddressResponse(Address address){
         return AddressResponse.builder()
+                .id(address.getId())
+                .name(address.getName())
                 .doorNumber(address.getDoorNumber())
                 .street(address.getStreet())
                 .area(address.getArea())

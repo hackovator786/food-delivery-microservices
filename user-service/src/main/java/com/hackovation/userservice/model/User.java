@@ -67,6 +67,13 @@ public class User extends BaseModel {
         address.setUser(null);
     }
 
+    public Address getAddressByName(String name){
+        for(Address a: addresses){
+            if(a.getName().equals(name)) return a;
+        }
+        return null;
+    }
+
     @PrePersist
     public void prePersist() {
         super.prePersist();

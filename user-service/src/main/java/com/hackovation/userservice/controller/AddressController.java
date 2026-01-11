@@ -33,7 +33,12 @@ public class AddressController {
 
     @PutMapping("/update/{addressId}")
     public ResponseEntity<?> updateAddress(@RequestHeader("loggedInUser") String userId, @PathVariable Long addressId, @Valid @RequestBody AddressRequest addressRequest) throws ApiException {
-        return ResponseEntity.ok().body(addressService.updateAddress(userId, addressId, addressRequest));
+        return ResponseEntity.ok().body(addressService.updateAddressById(userId, addressId, addressRequest));
+    }
+
+    @PutMapping("/update/name/{name}")
+    public ResponseEntity<?> updateAddressByName(@RequestHeader("loggedInUser") String userId, @PathVariable String name, @Valid @RequestBody AddressRequest addressRequest) throws ApiException {
+        return ResponseEntity.ok().body(addressService.updateAddressByName(userId, name, addressRequest));
     }
 
     @DeleteMapping("/delete/{addressId}")

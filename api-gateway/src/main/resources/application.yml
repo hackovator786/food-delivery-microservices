@@ -74,7 +74,7 @@ spring:
             - name: RedisRateLimiter
               args:
                 routeId: auth-user-service
-                maxRequests: 5
+                maxRequests: 50
                 durationInSeconds: 60
             - name: AuthFilter
               args:

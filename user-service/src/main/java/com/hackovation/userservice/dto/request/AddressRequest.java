@@ -17,6 +17,10 @@ public class AddressRequest {
 
     @NotBlank
     @Size(min = 2, max = 10, message = "Minimum length should be 2 and maximum length should be 10")
+    private String name;
+
+    @NotBlank
+    @Size(min = 2, max = 10, message = "Minimum length should be 2 and maximum length should be 10")
     private String doorNumber;
 
     @NotBlank

@@ -15,11 +15,20 @@ import lombok.*;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Entity
-@Table(name = "address")
+@Table(
+        name = "address",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "unique_address_name", columnNames = {"name", "user_id"})
+        }
+)
 public class Address extends BaseModel{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @NotBlank
+    @Size(min = 2, max = 10, message = "Minimum length should be 2 and maximum length should be 10")
+    private String name;
 
     @NotBlank
     @Size(min = 2, max = 10, message = "Minimum length should be 2 and maximum length should be 10")

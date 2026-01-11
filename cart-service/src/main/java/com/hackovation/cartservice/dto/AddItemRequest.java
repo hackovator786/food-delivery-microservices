@@ -18,6 +18,4 @@ public class AddItemRequest {
     @NotBlank
     @Size(min = 2, max = 60)
     private String menuItemId;
-
-    private Boolean increase;
 }

@@ -240,6 +240,16 @@ public class MenuItemService {
         return "MenuItem deleted successfully";
     }
 
+    public void uploadAllToSearchService() throws Exception {
+        Map<String, String> resMap = new HashMap<>();
+
+        List<MenuItem> items = menuItemRepository.findAll();
+
+        for(MenuItem item: items){
+            publishMenuItemEvent(item, "A2B", "CREATE");
+        }
+    }
+
     private String getRestaurantName(String restaurantId, String userId) {
 
         ResponseEntity<?> response = restaurantInterface.getRestaurantName(restaurantId, userId);

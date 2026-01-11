@@ -33,6 +33,9 @@ public class Cart extends BaseModel{
     @Field("items")
     private List<CartItem> items;
 
+    @Field("notes")
+    private String notes;
+
     public Cart(String userId, String restaurantId) {
         this.userId = userId;
         this.restaurantId = restaurantId;

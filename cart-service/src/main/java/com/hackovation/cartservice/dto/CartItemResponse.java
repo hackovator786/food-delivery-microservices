@@ -13,6 +13,5 @@ public class CartItemResponse {
     private String menuItemId;
     private String itemName;
     private Integer quantity;
-    private Double unitPrice;
-    private String notes;
+    private Double lineItemTotal;
 }

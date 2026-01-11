@@ -29,7 +29,4 @@ public class CartItem {
     @Min(value = 1)
     @Field("unit_price")
     private Double unitPrice;
-
-    @Field("notes")
-    private String notes;
 }

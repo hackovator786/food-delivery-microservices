@@ -88,4 +88,10 @@ public class MenuItemController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/upload-all")
+    public ResponseEntity<?> uploadAll() throws Exception {
+        menuItemService.uploadAllToSearchService();
+        return ResponseEntity.noContent().build();
+    }
+
 }
