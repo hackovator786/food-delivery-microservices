@@ -7,7 +7,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.mapping.FieldType;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -27,8 +29,8 @@ public class Cart extends BaseModel{
     private String restaurantId;
 
     @Min(value = 1)
-    @Field("sub_total")
-    private Double subTotal;
+    @Field(name = "sub_total", targetType = FieldType.DECIMAL128)
+    private BigDecimal subTotal;
 
     @Field("items")
     private List<CartItem> items;

@@ -38,7 +38,6 @@ public class OrderItem {
     private Integer quantity;
 
     @NotNull(message = "Unit Price cannot be null")
-    private Double unitPriceSnapshot;
+    private BigDecimal unitPriceSnapshot;
 
-    private String notes;
 }

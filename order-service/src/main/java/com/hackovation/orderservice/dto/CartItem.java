@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -13,6 +15,6 @@ public class CartItem {
     private String menuItemId;
     private String itemName;
     private Integer quantity;
-    private Double unitPrice;
-    private String notes;
+    private BigDecimal unitPrice;
+    private BigDecimal lineItemTotal;
 }

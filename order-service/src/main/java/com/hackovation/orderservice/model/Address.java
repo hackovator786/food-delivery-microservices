@@ -2,10 +2,7 @@ package com.hackovation.orderservice.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,7 +19,16 @@ import java.util.Set;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Entity
-@Table(name = "address")
+@Table(
+        name = "address",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "userid_addressid_unique", columnNames = {"user_id", "address_id"})
+        },
+        indexes = {
+                @Index(name = "user_id_index", columnList = "user_id"),
+                @Index(name = "address_id_index", columnList = "address_id")
+        }
+)
 public class Address extends BaseModel{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,6 +36,9 @@ public class Address extends BaseModel{
 
     @NotBlank(message = "User Id cannot be blank")
     private String userId;
+
+    @NotNull
+    private Long addressId;
 
     @NotBlank
     @Size(min = 2, max = 10, message = "Minimum length should be 2 and maximum length should be 10")

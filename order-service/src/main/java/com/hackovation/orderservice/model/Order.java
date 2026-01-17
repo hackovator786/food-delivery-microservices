@@ -47,19 +47,19 @@ public class Order extends BaseModel{
     private List<OrderItem> orderItems;
 
     @NotNull(message = "Total Amount cannot be null")
-    private Double totalAmount;
+    private BigDecimal totalAmount;
 
     @NotNull(message = "Sub Total cannot be null")
-    private Double subTotal;
+    private BigDecimal subTotal;
 
     @NotNull(message = "Delivery Charge cannot be null")
-    private Double deliveryCharge;
+    private BigDecimal deliveryCharge;
 
     @NotNull(message = "Tax cannot be null")
-    private Double tax;
+    private BigDecimal tax;
 
     @NotNull(message = "Discount cannot be null")
-    private Double discount;
+    private BigDecimal discount;
 
     @NotNull(message = "Order Time cannot be null")
     private Long orderTime;
@@ -80,6 +80,8 @@ public class Order extends BaseModel{
     private PaymentStatus paymentStatus;
 
     private String transactionId;
+
+    private String notes;
 
     public void addOrderItem(OrderItem orderItem){
         orderItems.add(orderItem);

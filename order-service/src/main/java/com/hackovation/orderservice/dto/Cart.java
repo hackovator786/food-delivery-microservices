@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -13,9 +14,10 @@ import java.util.List;
 @Builder
 public class Cart {
     private String restaurantId;
-    private Double subTotal;
-    private Double totalAmount;
-    private Double tax;
-    private Double discount;
+    private BigDecimal subTotal;
+    private BigDecimal tax;
+    private BigDecimal discount;
+    private BigDecimal total;
+    private String notes;
     private List<CartItem> items;
 }

@@ -1,0 +1,170 @@
+package com.hackovation.cartservice.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hackovation.cartservice.dto.*;
+import com.hackovation.cartservice.exception.ApiException;
+import com.hackovation.cartservice.feign.FeignExceptionWrapper;
+import com.hackovation.cartservice.feign.MenuItemInterface;
+import com.hackovation.cartservice.model.Cart;
+import com.hackovation.cartservice.model.CartItem;
+import com.hackovation.cartservice.repository.CartRepository;
+import feign.FeignException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static com.hackovation.cartservice.util.GenericUtils.bigDecimal;
+
+@Service
+public class CartServiceImpl extends CartServiceAbstract implements CartService{
+
+    @Autowired
+    private CartRepository cartRepository;
+
+    @Autowired
+    private MenuItemInterface menuItemInterface;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    public CartResponse getCartItems(String userId) {
+
+        // TODO -Check for updated prices from menu-service
+
+
+        if(cartRepository.findByUserId(userId).isPresent()) {
+            return convertCartToCartResponse(cartRepository.findByUserId(userId).get());
+        }
+
+        return null;
+    }
+
+    public Map<String, Integer> getCartItemsAndQuantity(String userId, String restaurantId) {
+        Map<String, Integer> menuItemIdQtyMap = new HashMap<>();
+        Optional<Cart> optionalCart = cartRepository.findByUserId(userId);
+        if(optionalCart.isPresent()) {
+            Cart cart = optionalCart.get();
+            if(!cart.getRestaurantId().equals(restaurantId)) {
+                return menuItemIdQtyMap;
+            }
+            cart.getItems().forEach(item -> menuItemIdQtyMap.put(item.getMenuItemId(), item.getQuantity()));
+        }
+        return menuItemIdQtyMap;
+    }
+
+    @Transactional(rollbackFor = {Exception.class})
+    public CartItemQtyResponse updateCart(String userId, String restaurantId, String menuItemId, Boolean increase) throws Exception {
+
+        Optional<Cart> optionalCart = cartRepository.findByUserId(userId);
+        if(optionalCart.isEmpty()) {
+            if(!increase) {
+                throw new ApiException("Cart does not exist");
+            }
+            Cart cart = new Cart(userId, restaurantId);
+
+            // Fetching details of the menu item from menu service
+            MenuItemDetailsResponse menuItemDetailsResponse = getMenuItemDetails(restaurantId, menuItemId);
+
+            CartItem cartItem = CartItem.builder()
+                    .menuItemId(menuItemId)
+                    .itemName(menuItemDetailsResponse.getMenuItemName())
+                    .quantity(1)
+                    .unitPrice(bigDecimal(menuItemDetailsResponse.getMenuItemPrice()))
+                    .build();
+            cart.setItems(List.of(cartItem));
+            cart.setSubTotal(cartItem.getUnitPrice());
+            return convertCartToCartItemQtyResponse(cartRepository.save(cart));
+        }
+
+        Cart cart = optionalCart.get();
+
+        if(!cart.getRestaurantId().equals(restaurantId)) {
+            throw new ApiException("Restaurant id mismatch");
+        }
+
+        boolean itemExists = cart.getItems().stream().anyMatch(item -> item.getMenuItemId().equals(menuItemId));
+
+        if(!itemExists) {
+            if(!increase) {
+                throw new ApiException("Item does not exist in cart");
+            }
+            MenuItemDetailsResponse menuItemDetailsResponse = getMenuItemDetails(restaurantId, menuItemId);
+            CartItem cartItem = CartItem.builder()
+                    .menuItemId(menuItemId)
+                    .itemName(menuItemDetailsResponse.getMenuItemName())
+                    .quantity(1)
+                    .unitPrice(bigDecimal(menuItemDetailsResponse.getMenuItemPrice()))
+                    .build();
+            cart.getItems().add(cartItem);
+            cart.setSubTotal(bigDecimal(cart.getSubTotal().add(cartItem.getUnitPrice())));
+            return convertCartToCartItemQtyResponse(cartRepository.save(cart));
+        }
+
+        if(increase) {
+            Optional<CartItem> cartItemOptional = cart.getItems().stream().filter(item -> item.getMenuItemId().equals(menuItemId)).findFirst();
+            if(cartItemOptional.isEmpty()) throw new ApiException("Item doesn't exist");
+            CartItem cartItem = cartItemOptional.get();
+            cartItem.setQuantity(cartItem.getQuantity() + 1);
+            cart.setSubTotal(bigDecimal(cart.getSubTotal().add(cartItem.getUnitPrice())));
+            return convertCartToCartItemQtyResponse(cartRepository.save(cart));
+        }
+
+        Optional<CartItem> cartItemOptional = cart.getItems().stream().filter(item -> item.getMenuItemId().equals(menuItemId)).findFirst();
+        if(cartItemOptional.isEmpty()) throw new ApiException("Item doesn't exist");
+        CartItem cartItem = cartItemOptional.get();
+        cartItem.setQuantity(cartItem.getQuantity() - 1);
+        cart.setSubTotal(bigDecimal(cart.getSubTotal().subtract(cartItem.getUnitPrice())));
+        if(cartItem.getQuantity() == 0) {
+            cart.getItems().remove(cartItem);
+        }
+
+        if(cart.getItems().isEmpty()) {
+            cartRepository.delete(cart);
+            return null;
+        }
+
+        return convertCartToCartItemQtyResponse(cartRepository.save(cart));
+    }
+
+    public Boolean deleteCart(String userId) {
+        try {
+            cartRepository.deleteByUserId(userId);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private MenuItemDetailsResponse getMenuItemDetails(String restaurantId, String menuItemId) throws Exception {
+        try{
+            ResponseEntity<?> response = menuItemInterface.getMenuItem(new MenuItemDetailsRequest(restaurantId, menuItemId));
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() instanceof Map<?, ?> map) {
+                 return objectMapper.convertValue(map, MenuItemDetailsResponse.class);
+            } else if (response.getBody() instanceof Map<?, ?> map) {
+                ErrorResponse error = objectMapper.convertValue(map, ErrorResponse.class);
+                System.out.println("Error: " + error.getMessage());
+                throw new ApiException(error.getMessage());
+            } else {
+                System.out.println("Unexpected response format");
+                throw new Exception("Unexpected response format");
+            }
+        } catch (FeignException feignException) {
+            System.out.println("Error from menu service: " + feignException.getMessage());
+            throw new ApiException(feignException.getMessage());
+        } catch (FeignExceptionWrapper ex) {
+            ErrResponse error = ex.getErrorResponse();
+            System.out.println("Error from menu service: " + error.getMessage());
+            throw new ApiException(error.getMessage());
+        } catch (Exception ex){
+            throw new Exception(ex.getMessage());
+        }
+    }
+
+}

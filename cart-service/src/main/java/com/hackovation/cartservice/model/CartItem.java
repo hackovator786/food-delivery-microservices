@@ -7,6 +7,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.mapping.FieldType;
+
+import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
@@ -27,6 +30,6 @@ public class CartItem {
     private Integer quantity;
 
     @Min(value = 1)
-    @Field("unit_price")
-    private Double unitPrice;
+    @Field(name = "unit_price", targetType = FieldType.DECIMAL128)
+    private BigDecimal unitPrice;
 }

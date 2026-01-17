@@ -18,6 +18,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,7 +48,6 @@ public class OrderService {
                 throw new Exception("Unknown error has occurred");
             }
 
-            return cart;
             // Create an order entity
 //            Order order = createOrderEntity(userId,cart);
 //            orderRepository.save(order);
@@ -98,9 +98,9 @@ public class OrderService {
                 .orderId(UUID.randomUUID().toString())
                 .userId(userId)
                 .restaurantId(cart.getRestaurantId())
-                .totalAmount(cart.getTotalAmount())
+                .totalAmount(cart.getTotal())
                 .subTotal(cart.getSubTotal())
-                .deliveryCharge(0.0)
+                .deliveryCharge(new BigDecimal("0.0"))
                 .tax(cart.getTax())
                 .discount(cart.getDiscount())
                 .address(null)
@@ -118,7 +118,6 @@ public class OrderService {
                 .itemName(cartItem.getItemName())
                 .quantity(cartItem.getQuantity())
                 .unitPriceSnapshot(cartItem.getUnitPrice())
-                .notes(cartItem.getNotes())
                 .build();
     }
 
