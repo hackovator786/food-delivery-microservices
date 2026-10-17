@@ -37,3 +37,6 @@ build/
 
 ### Log Directory ###
 log/
+
+### Env files ###
+.env

@@ -1,19 +1,29 @@
 spring:
   elasticsearch:
-    uris: "${ELASTIC_HOST:https://localhost:9200}"
+    # Comma-separated list of all cluster nodes.
+    # Override via ELASTIC_URIS env var for production;
+    # defaults to es01 only for local single-node dev.
+    uris: "${ELASTIC_URIS:https://localhost:9200}"
     username: elastic
     password: "${ELASTIC_PASSWORD}"
     restclient:
       ssl:
         bundle: es-ssl
+      # Connection / socket timeouts (ms)
+      connection-timeout: 5000
+      socket-timeout: 30000
+  kafka:
+    bootstrap-servers: "${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}"
+    group-id: search-service-group
 
 ssl:
   bundle:
-    jks:
+    pem:
       es-ssl:
         truststore:
-          location: "file:${TRUSTSTORE_LOCATION}"
-          password: "${TRUSTSTORE_PASSWORD}"
+          # Path to ca.crt produced by the setup container.
+          # Mount the 'certs' Docker volume (or copy ca.crt out) and set CA_CERT_LOCATION.
+          certificate: "file:${CA_CERT_LOCATION}"
 
 #Eureka Client Configuration
 eureka:

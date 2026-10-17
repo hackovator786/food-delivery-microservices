@@ -12,6 +12,8 @@ import javax.net.ssl.TrustManagerFactory;
 
 import java.io.InputStream;
 import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 
 @Configuration
 public class ElasticsearchSSLConfig extends ElasticsearchConfiguration {
@@ -25,11 +27,9 @@ public class ElasticsearchSSLConfig extends ElasticsearchConfiguration {
     @Value("${spring.elasticsearch.password}")
     private String pass;
 
-    @Value("${ssl.bundle.jks.es-ssl.truststore.location}")
-    private Resource trustResource;
-
-    @Value("${ssl.bundle.jks.es-ssl.truststore.password}")
-    private String trustPwd;
+    /** Path to the ca.crt PEM file produced by the setup container. */
+    @Value("${ssl.bundle.pem.es-ssl.truststore.certificate}")
+    private Resource caCertResource;
 
     @Override
     public ClientConfiguration clientConfiguration() {
@@ -41,9 +41,13 @@ public class ElasticsearchSSLConfig extends ElasticsearchConfiguration {
     }
 
     private SSLContext buildSslContext() {
-        try (InputStream is = trustResource.getInputStream()) {
+        try (InputStream is = caCertResource.getInputStream()) {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            X509Certificate caCert = (X509Certificate) cf.generateCertificate(is);
+
             KeyStore ts = KeyStore.getInstance(KeyStore.getDefaultType());
-            ts.load(is, trustPwd.toCharArray());
+            ts.load(null, null);
+            ts.setCertificateEntry("es-ca", caCert);
 
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(
                     TrustManagerFactory.getDefaultAlgorithm());
@@ -57,7 +61,7 @@ public class ElasticsearchSSLConfig extends ElasticsearchConfiguration {
         }
     }
 
-    /** Remove protocol prefix so spring/ClientConfiguration.connectedTo(...) gets host:port only. */
+    /** Remove protocol prefix so ClientConfiguration.connectedTo(...) gets host:port only. */
     private String trimProtocol(String url) {
         if (url.startsWith("https://")) {
             return url.substring("https://".length());

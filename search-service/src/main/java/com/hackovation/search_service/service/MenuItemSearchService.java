@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import com.hackovation.search_service.dto.MenuItemRequest;
 import com.hackovation.search_service.dto.MenuItemResponse;
 import com.hackovation.search_service.dto.SearchRequestDto;
 import com.hackovation.search_service.model.MenuItemDocument;
@@ -15,8 +16,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -135,6 +139,54 @@ public class MenuItemSearchService {
         return StreamSupport.stream(
                         menuItemSearchRepository.findAll().spliterator(), false)
                 .toList().stream().map(this::convertToMenuItemResponse).collect(Collectors.toList());
+    }
+
+    public Optional<MenuItemResponse> getMenuItemById(String menuItemId) {
+        return menuItemSearchRepository.findById(menuItemId)
+                .map(this::convertToMenuItemResponse);
+    }
+
+    public MenuItemResponse createMenuItem(MenuItemRequest request) {
+        MenuItemDocument doc = buildDocument(new MenuItemDocument(), request);
+        doc.setCreatedAt(Instant.now());
+        doc.setUpdatedAt(Instant.now());
+        menuItemSearchRepository.save(doc);
+        return convertToMenuItemResponse(doc);
+    }
+
+    public Optional<MenuItemResponse> updateMenuItem(String menuItemId, MenuItemRequest request) {
+        return menuItemSearchRepository.findById(menuItemId).map(existing -> {
+            MenuItemDocument updated = buildDocument(existing, request);
+            updated.setUpdatedAt(Instant.now());
+            menuItemSearchRepository.save(updated);
+            return convertToMenuItemResponse(updated);
+        });
+    }
+
+    public boolean deleteMenuItem(String menuItemId) {
+        if (!menuItemSearchRepository.existsById(menuItemId)) {
+            return false;
+        }
+        menuItemSearchRepository.deleteById(menuItemId);
+        return true;
+    }
+
+    private MenuItemDocument buildDocument(MenuItemDocument doc, MenuItemRequest request) {
+        Set<MenuItemDocument.TagDoc> tagDocs = request.getTags() == null ? null :
+                request.getTags().stream()
+                        .map(MenuItemDocument.TagDoc::new)
+                        .collect(Collectors.toSet());
+
+        doc.setMenuItemId(request.getMenuItemId());
+        doc.setRestaurantId(request.getRestaurantId());
+        doc.setMenuItemName(request.getName());
+        doc.setDescription(request.getDescription());
+        doc.setCategory(request.getCategory());
+        doc.setPrice(request.getPrice());
+        doc.setIsAvailable(request.getIsAvailable());
+        doc.setTags(tagDocs);
+        doc.setImageUrl(request.getImageUrl());
+        return doc;
     }
 
     private MenuItemResponse convertToMenuItemResponse(MenuItemDocument doc) {

@@ -14,6 +14,7 @@ import com.hackovation.menu_service.repository.MenuItemRepository;
 import com.hackovation.menu_service.repository.TagRepository;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MenuItemService {
     @Autowired
     private MenuItemRepository menuItemRepository;
@@ -241,12 +243,30 @@ public class MenuItemService {
     }
 
     public void uploadAllToSearchService() throws Exception {
-        Map<String, String> resMap = new HashMap<>();
-
         List<MenuItem> items = menuItemRepository.findAll();
 
-        for(MenuItem item: items){
-            publishMenuItemEvent(item, "A2B", "CREATE");
+        // Cache restaurant names to avoid a Feign call per item
+        Map<String, String> restaurantNameCache = new HashMap<>();
+
+        for (MenuItem item : items) {
+            String restaurantName = restaurantNameCache.computeIfAbsent(item.getRestaurantId(), id -> {
+                try {
+                    ResponseEntity<?> response = restaurantInterface.getRestaurantNameById(id);
+                    if (response.getStatusCode().is2xxSuccessful() && response.getBody() instanceof Map<?, ?> map) {
+                        return (String) ((Map<String, Object>) map).get("name");
+                    }
+                } catch (Exception e) {
+                    log.warn("Could not fetch restaurant name for id={}: {}", id, e.getMessage());
+                }
+                return null;
+            });
+
+            if (restaurantName == null) {
+                log.warn("Skipping menuItem={} — restaurant name not found for restaurantId={}", item.getMenuItemId(), item.getRestaurantId());
+                continue;
+            }
+
+            publishMenuItemEvent(item, restaurantName, "CREATE");
         }
     }
 

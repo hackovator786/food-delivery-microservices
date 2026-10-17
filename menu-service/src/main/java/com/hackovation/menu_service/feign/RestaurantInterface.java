@@ -10,4 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface RestaurantInterface {
     @GetMapping("/api/v1.0/internal/restaurant-name")
     public ResponseEntity<?> getRestaurantName(@RequestParam("restaurant-id") String restaurantId, @RequestParam("user-id") String userId);
+
+    @GetMapping("/api/v1.0/internal/restaurant-name-only")
+    public ResponseEntity<?> getRestaurantNameById(@RequestParam("restaurant-id") String restaurantId);
 }

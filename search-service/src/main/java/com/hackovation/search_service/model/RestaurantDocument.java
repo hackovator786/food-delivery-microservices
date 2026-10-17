@@ -26,8 +26,14 @@ public class RestaurantDocument {
     @Field(type = FieldType.Keyword)
     private String restaurantId;
 
-    @Field(type = FieldType.Keyword)
+    @Field(type = FieldType.Text)
     private String restaurantName;
+
+    @Field(type = FieldType.Text)
+    private String description;
+
+    @Field(type = FieldType.Keyword)
+    private String cuisine;
 
     @Field(type = FieldType.Double)
     private Double rating;
